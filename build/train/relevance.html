@@ -1,0 +1,238 @@
+<!DOCTYPE HTML>
+<html lang="en-US">
+	<head>
+		<meta charset="utf-8">
+		<meta http-equiv="X-UA-Compatible" content="IE=edge">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<meta name="description" content="FormJS - The easiest and most powerful way to create forms and surveys.">
+		<meta name="author" content="Julien Loutre">
+		<link rel="shortcut icon" href="favicon.png">
+		
+		<base href="../">
+		
+		<title>AIStock - Relevance Training</title>
+		
+		<script src="http://code.jquery.com/jquery-1.10.2.min.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.2.7/angular.min.js"></script>
+<script src="public/underscore/underscore-min.js"></script>
+<script src="public/json2/json2.js"></script>
+<script src="public/api/api.js"></script>
+<script src="public/bootstrap/./dist/js/bootstrap.js"></script>
+		<link href="public/bootstrap/./dist/css/bootstrap.css" rel="stylesheet">
+		
+	</head>
+	<body ng-app="main">
+		
+		<div id="wrap">
+		
+			<!-- Fixed navbar -->
+			<div class="navbar navbar-default navbar-fixed-top" role="navigation" ng-controller="headerCtrl">
+				<div class="container">
+					<div class="navbar-header">
+						<button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+							<span class="sr-only">Toggle navigation</span>
+							<span class="icon-bar"></span>
+							<span class="icon-bar"></span>
+							<span class="icon-bar"></span>
+						</button>
+						<a class="navbar-brand" href="#">AIStock</a>
+					</div>
+					<div class="collapse navbar-collapse">
+						<ul class="nav navbar-nav">
+							<li ><a href="../index.html">Status</a></li>
+							<li class="dropdown active">
+								<a href="#" class="dropdown-toggle" data-toggle="dropdown">Relevance Training <b class="caret"></b></a>
+								<ul class="dropdown-menu">
+									<li><a href="train/relevance.html?symbol={{symbol}}" ng-repeat="(symbol, keywords) in tracked">${{symbol}}</a></li>
+								</ul>
+							</li>
+							<li class="dropdown ">
+								<a href="#" class="dropdown-toggle" data-toggle="dropdown">Sentiment Training <b class="caret"></b></a>
+								<ul class="dropdown-menu">
+									<li><a href="train/sentiment.html?symbol={{symbol}}" ng-repeat="(symbol, keywords) in tracked">${{symbol}}</a></li>
+								</ul>
+							</li>
+							<li><a href="mailto:julien@twenty-six-medias.com">Contact</a></li>
+						</ul>
+					</div><!--/.nav-collapse -->
+				</div>
+			</div>
+			
+			<script type="text/javascript">
+				__GLOBAL__ = {
+					api:	'http://127.0.0.1:2015'
+				};
+				var main = angular.module('main', []);
+				main.controller('headerCtrl', function ($scope) {
+					$scope.tracked = {};
+					$(function() {
+						$.apicall({
+							method:		"stock.tracked",
+							callback:	function(response) {
+								$scope.tracked = response;
+								$scope.$apply();
+							}
+						});
+					});
+				});
+			</script>
+			
+			<!-- Begin page content -->
+			<div class="container" style="padding-top: 80px;">
+				<div ng-controller="mainCtrl">
+	<div class="panel panel-default">
+		<div class="panel-heading">Tweets</div>
+		<table class="table table-hover">
+			<tbody>
+				<tr ng-repeat="tweet in tweets.data" ng-class="{success:tweet.relevant, danger:tweet.trash}">
+					<td style="width:200px;">
+						<div class="btn-group">
+							<button type="button" class="btn btn-primary" ng-click="revelant(tweet)"><span class="glyphicon glyphicon-star"></span> Relevant</button>
+							<button type="button" class="btn btn-danger" ng-click="trash(tweet)"><span class="glyphicon glyphicon-thumbs-down"></span> Trash</button>
+						</div>
+					</td>
+					<td style="width:50px;text-align:center;">
+						<button ng-click="accept(tweet)" type="button" class="btn" ng-class="{'btn-primary':tweet.estimate=='relevant', 'btn-danger':tweet.estimate=='trash'}">
+							<span class="glyphicon" ng-class="{'glyphicon-ok':tweet.estimate=='relevant','glyphicon-remove':tweet.estimate=='trash'}"></span>
+						</button>
+					</td>
+					<td>
+						{{tweet.keyword}}
+					</td>
+					<td>
+						{{tweet.text}}
+					</td>
+				</tr>
+			</tbody>
+		</table>
+		<div class="panel-footer">
+			<div class="btn-group">
+				<button type="button" class="btn btn-info" ng-click="prev()"><span class="glyphicon glyphicon-step-backward"></span> Prev</button>
+				<button type="button" class="btn btn-info" ng-click="next()"><span class="glyphicon glyphicon-step-forward"></span> Next</button>
+				<button type="button" class="btn btn-primary" ng-click="refresh()"><span class="glyphicon glyphicon-refresh"></span> Refresh</button>
+				<div class="btn-group">
+					<button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown">
+						Per Page
+						<span class="caret"></span>
+					</button>
+					<ul class="dropdown-menu">
+						<li><a href="javascript:void(0);" ng-click="setPerPage(10)">10</a></li>
+						<li><a href="javascript:void(0);" ng-click="setPerPage(20)">20</a></li>
+						<li><a href="javascript:void(0);" ng-click="setPerPage(50)">50</a></li>
+						<li><a href="javascript:void(0);" ng-click="setPerPage(100)">100</a></li>
+					</ul>
+				</div>
+			</div>
+
+		</div>
+	</div>
+</div>
+
+<script type="text/javascript">
+	main.controller('mainCtrl', function ($scope) {
+
+		$scope.perpage 	= 10;
+		$scope.page 	= 1;
+		$scope.tweets	= {
+			pagination:	 {
+				perpage:	10,
+				total:		0,
+				pages:		0,
+				current:	1
+			},
+			data:			[]
+		};
+		
+		$scope.refresh = function(n) {
+			$scope.loadPage($scope.page);
+		};
+		
+		$scope.prev = function(n) {
+			$scope.page--;
+			$scope.page = Math.max(1, $scope.page);
+			$scope.loadPage($scope.page);
+		};
+		
+		$scope.next = function(n) {
+			$scope.page++;
+			$scope.page = Math.min($scope.tweets.pagination.pages, $scope.page);
+			$scope.loadPage($scope.page);
+		};
+		
+		$scope.loadPage = function(n) {
+			$.apicall({
+				method:		"train.getTweets",
+				params: {
+					page:		n,
+					perpage:	$scope.perpage,
+					symbol:		$scope.symbol,
+					type:		"relevance"
+				},
+				callback:	function(response) {
+					$scope.tweets 	= response;
+					$scope.$apply();
+				}
+			});
+		};
+		
+		$scope.setPerPage = function(n) {
+			$scope.perpage = n;
+			$scope.loadPage($scope.page);
+		};
+		
+		$scope.revelant = function(tweet) {
+			
+			tweet.relevant = true;
+			
+			$.apicall({
+				method:		"train.tweetIsRelevant",
+				params: {
+					_id:	tweet._id
+				},
+				callback:	function(response) {
+				}
+			});
+		};
+		
+		$scope.trash = function(tweet) {
+			
+			tweet.trash = true;
+			
+			$.apicall({
+				method:		"train.tweetIsTrash",
+				params: {
+					_id:	tweet._id
+				},
+				callback:	function(response) {
+				}
+			});
+		};
+		
+		$scope.accept = function(tweet) {
+			if (tweet.estimate=='relevant') {
+				$scope.revelant(tweet);
+			} else {
+				$scope.trash(tweet);
+			}
+		};
+
+		$(function() {
+			$scope.params = $.getParams();
+			$scope.symbol = $scope.params.symbol;
+			$scope.loadPage(1);
+		});
+
+
+	});
+</script>
+			</div>
+		</div>
+		
+		<div id="footer">
+			<div class="container">
+				<p class="text-muted">&copy; Twenty-Six Medias, Inc 2014</p>
+			</div>
+		</div>
+		
+	</body>
+</html>

@@ -1,0 +1,17 @@
+{
+	"name": "FormJS",
+	"version": "1.2.7",
+	"main": [
+		"core.js",
+		"modules/bootstrap.js",
+		"modules/accordion.js",
+		"modules/checkbox.js",
+		"modules/radio.js",
+		"modules/varchar.js"
+	],
+	"dependencies":	{
+		"jquery":		"latest",
+		"underscore":	"latest",
+		"json2":		"latest"
+	}
+}

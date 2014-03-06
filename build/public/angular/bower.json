@@ -1,0 +1,10 @@
+{
+	"name": "AngularJS",
+	"version": "1.2.7",
+	"dependencies":	{
+		"jquery":		"latest"
+	},
+	"main": [
+		"https://ajax.googleapis.com/ajax/libs/angularjs/1.2.7/angular.min.js"
+	]
+}

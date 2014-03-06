@@ -1,0 +1,12 @@
+{
+	"name": "api",
+	"version": "1.0",
+	"main": [
+		"api.js"
+	],
+	"dependencies":	{
+		"jquery":		"latest",
+		"underscore":	"latest",
+		"json2":		"latest"
+	}
+}
