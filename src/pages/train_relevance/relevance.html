@@ -1,0 +1,146 @@
+<div ng-controller="mainCtrl">
+	<div class="panel panel-default">
+		<div class="panel-heading">Tweets</div>
+		<table class="table table-hover">
+			<tbody>
+				<tr ng-repeat="tweet in tweets.data" ng-class="{success:tweet.relevant, danger:tweet.trash}">
+					<td style="width:200px;">
+						<div class="btn-group">
+							<button type="button" class="btn btn-primary" ng-click="revelant(tweet)"><span class="glyphicon glyphicon-star"></span> Relevant</button>
+							<button type="button" class="btn btn-danger" ng-click="trash(tweet)"><span class="glyphicon glyphicon-thumbs-down"></span> Trash</button>
+						</div>
+					</td>
+					<td style="width:50px;text-align:center;">
+						<button ng-click="accept(tweet)" type="button" class="btn" ng-class="{'btn-primary':tweet.estimate=='relevant', 'btn-danger':tweet.estimate=='trash'}">
+							<span class="glyphicon" ng-class="{'glyphicon-ok':tweet.estimate=='relevant','glyphicon-remove':tweet.estimate=='trash'}"></span>
+						</button>
+					</td>
+					<td>
+						{{tweet.keyword}}
+					</td>
+					<td>
+						{{tweet.text}}
+					</td>
+				</tr>
+			</tbody>
+		</table>
+		<div class="panel-footer">
+			<div class="btn-group">
+				<button type="button" class="btn btn-info" ng-click="prev()"><span class="glyphicon glyphicon-step-backward"></span> Prev</button>
+				<button type="button" class="btn btn-info" ng-click="next()"><span class="glyphicon glyphicon-step-forward"></span> Next</button>
+				<button type="button" class="btn btn-primary" ng-click="refresh()"><span class="glyphicon glyphicon-refresh"></span> Refresh</button>
+				<div class="btn-group">
+					<button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown">
+						Per Page
+						<span class="caret"></span>
+					</button>
+					<ul class="dropdown-menu">
+						<li><a href="javascript:void(0);" ng-click="setPerPage(10)">10</a></li>
+						<li><a href="javascript:void(0);" ng-click="setPerPage(20)">20</a></li>
+						<li><a href="javascript:void(0);" ng-click="setPerPage(50)">50</a></li>
+						<li><a href="javascript:void(0);" ng-click="setPerPage(100)">100</a></li>
+					</ul>
+				</div>
+			</div>
+
+		</div>
+	</div>
+</div>
+
+<script type="text/javascript">
+	main.controller('mainCtrl', function ($scope) {
+
+		$scope.perpage 	= 10;
+		$scope.page 	= 1;
+		$scope.tweets	= {
+			pagination:	 {
+				perpage:	10,
+				total:		0,
+				pages:		0,
+				current:	1
+			},
+			data:			[]
+		};
+		
+		$scope.refresh = function(n) {
+			$scope.loadPage($scope.page);
+		};
+		
+		$scope.prev = function(n) {
+			$scope.page--;
+			$scope.page = Math.max(1, $scope.page);
+			$scope.loadPage($scope.page);
+		};
+		
+		$scope.next = function(n) {
+			$scope.page++;
+			$scope.page = Math.min($scope.tweets.pagination.pages, $scope.page);
+			$scope.loadPage($scope.page);
+		};
+		
+		$scope.loadPage = function(n) {
+			$.apicall({
+				method:		"train.getTweets",
+				params: {
+					page:		n,
+					perpage:	$scope.perpage,
+					symbol:		$scope.symbol,
+					type:		"relevance"
+				},
+				callback:	function(response) {
+					$scope.tweets 	= response;
+					$scope.$apply();
+				}
+			});
+		};
+		
+		$scope.setPerPage = function(n) {
+			$scope.perpage = n;
+			$scope.loadPage($scope.page);
+		};
+		
+		$scope.revelant = function(tweet) {
+			
+			tweet.relevant = true;
+			
+			$.apicall({
+				method:		"train.tweetIsRelevant",
+				params: {
+					_id:	tweet._id
+				},
+				callback:	function(response) {
+				}
+			});
+		};
+		
+		$scope.trash = function(tweet) {
+			
+			tweet.trash = true;
+			
+			$.apicall({
+				method:		"train.tweetIsTrash",
+				params: {
+					_id:	tweet._id
+				},
+				callback:	function(response) {
+				}
+			});
+		};
+		
+		$scope.accept = function(tweet) {
+			if (tweet.estimate=='relevant') {
+				$scope.revelant(tweet);
+			} else {
+				$scope.trash(tweet);
+			}
+		};
+
+		$(function() {
+			$scope.params = $.getParams();
+			$scope.symbol = $scope.params.symbol;
+			$scope.loadPage(1);
+		});
+
+
+	});
+</script>

@@ -1,0 +1,6 @@
+{
+	"output":		"build",
+	"src":			"src",
+	"pages":		"pages",
+	"templates":	"templates"
+}

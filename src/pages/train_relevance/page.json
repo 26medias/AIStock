@@ -1,0 +1,16 @@
+{
+	"name":			"train_relevance",
+	"files":		{
+		"relevance.html": {
+			"title":	"AIStock - Relevance Training",
+			"filename":	"train/relevance.html"
+		}
+	},
+	"template":		"main.html",
+	"dependencies":	[
+		"jquery",
+		"AngularJS",
+		"bootstrap",
+		"api"
+	]
+}

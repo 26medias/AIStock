@@ -1,0 +1,6 @@
+{
+	"name": "jquery",
+	"version": "1.10.2",
+	"description": "jQuery component",
+	"main": "http://code.jquery.com/jquery-1.10.2.min.js"
+}

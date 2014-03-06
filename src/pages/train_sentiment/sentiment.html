@@ -1,0 +1,166 @@
+<div ng-controller="mainCtrl">
+	<div class="panel panel-default">
+		<div class="panel-heading">Tweets</div>
+		<table class="table table-hover">
+			<tbody>
+				<tr ng-repeat="tweet in tweets.data" ng-class="{success:tweet.positive, danger:tweet.negative, warning:tweet.neutral}">
+					<td style="width:300px;">
+						<div class="btn-group">
+							<button type="button" class="btn btn-primary" ng-click="positive(tweet)"><span class="glyphicon glyphicon-star"></span> positive</button>
+							<button type="button" class="btn btn-info" ng-click="neutral(tweet)"><span class="glyphicon glyphicon-unchecked"></span> Neutral</button>
+							<button type="button" class="btn btn-danger" ng-click="negative(tweet)"><span class="glyphicon glyphicon-cloud"></span> negative</button>
+						</div>
+					</td>
+					<td style="width:50px;text-align:center;">
+						<button ng-click="accept(tweet)" type="button" class="btn" ng-class="{'btn-primary':tweet.estimate=='positive', 'btn-danger':tweet.estimate=='negative', 'btn-info':tweet.estimate=='neutral'}">
+							<span class="glyphicon" ng-class="{'glyphicon-ok':tweet.estimate=='positive','glyphicon-remove':tweet.estimate=='negative', 'glyphicon-unchecked':tweet.estimate=='neutral'}"></span>
+						</button>
+					</td>
+					<td>
+						{{tweet.keyword}}
+					</td>
+					<td>
+						{{tweet.classification}}
+					</td>
+					<td>
+						{{tweet.text}}
+					</td>
+				</tr>
+			</tbody>
+		</table>
+		<div class="panel-footer">
+			<div class="btn-group">
+				<button type="button" class="btn btn-info" ng-click="prev()"><span class="glyphicon glyphicon-step-backward"></span> Prev</button>
+				<button type="button" class="btn btn-info" ng-click="next()"><span class="glyphicon glyphicon-step-forward"></span> Next</button>
+				<button type="button" class="btn btn-primary" ng-click="refresh()"><span class="glyphicon glyphicon-refresh"></span> Refresh</button>
+				<div class="btn-group">
+					<button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown">
+						Per Page
+						<span class="caret"></span>
+					</button>
+					<ul class="dropdown-menu">
+						<li><a href="javascript:void(0);" ng-click="setPerPage(10)">10</a></li>
+						<li><a href="javascript:void(0);" ng-click="setPerPage(20)">20</a></li>
+						<li><a href="javascript:void(0);" ng-click="setPerPage(50)">50</a></li>
+						<li><a href="javascript:void(0);" ng-click="setPerPage(100)">100</a></li>
+					</ul>
+				</div>
+			</div>
+
+		</div>
+	</div>
+</div>
+
+<script type="text/javascript">
+	main.controller('mainCtrl', function ($scope) {
+
+		$scope.perpage 	= 10;
+		$scope.page 	= 1;
+		$scope.tweets	= {
+			pagination:	 {
+				perpage:	10,
+				total:		0,
+				pages:		0,
+				current:	1
+			},
+			data:			[]
+		};
+		
+		$scope.refresh = function(n) {
+			$scope.loadPage($scope.page);
+		};
+		
+		$scope.prev = function(n) {
+			$scope.page--;
+			$scope.page = Math.max(1, $scope.page);
+			$scope.loadPage($scope.page);
+		};
+		
+		$scope.next = function(n) {
+			$scope.page++;
+			$scope.page = Math.min($scope.tweets.pagination.pages, $scope.page);
+			$scope.loadPage($scope.page);
+		};
+		
+		$scope.loadPage = function(n) {
+			$.apicall({
+				method:		"train.getTweets",
+				params: {
+					page:		n,
+					perpage:	$scope.perpage,
+					symbol:		$scope.symbol,
+					type:		"sentiment"
+				},
+				callback:	function(response) {
+					$scope.tweets 	= response;
+					$scope.$apply();
+				}
+			});
+		};
+		
+		$scope.setPerPage = function(n) {
+			$scope.perpage = n;
+			$scope.loadPage($scope.page);
+		};
+		
+		$scope.positive = function(tweet) {
+			
+			tweet.positive = true;
+			
+			$.apicall({
+				method:		"train.tweetIsPositive",
+				params: {
+					_id:	tweet._id
+				},
+				callback:	function(response) {
+				}
+			});
+		};
+		
+		$scope.negative = function(tweet) {
+			
+			tweet.negative = true;
+			
+			$.apicall({
+				method:		"train.tweetIsNegative",
+				params: {
+					_id:	tweet._id
+				},
+				callback:	function(response) {
+				}
+			});
+		};
+		
+		$scope.neutral = function(tweet) {
+			
+			tweet.neutral = true;
+			
+			$.apicall({
+				method:		"train.tweetIsNeutral",
+				params: {
+					_id:	tweet._id
+				},
+				callback:	function(response) {
+				}
+			});
+		};
+		
+		$scope.accept = function(tweet) {
+			if (tweet.estimate=='positive') {
+				$scope.positive(tweet);
+			} else if (tweet.estimate=='negatif') {
+				$scope.negative(tweet);
+			} else {
+				$scope.neutral(tweet);
+			}
+		};
+
+		$(function() {
+			$scope.params = $.getParams();
+			$scope.symbol = $scope.params.symbol;
+			$scope.loadPage(1);
+		});
+
+
+	});
+</script>

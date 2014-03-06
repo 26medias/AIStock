@@ -1,0 +1,16 @@
+{
+	"name":			"index",
+	"files":		{
+		"index.html": {
+			"title":	"FormJS - The easiest and most powerful way to create forms and surveys.",
+			"filename":	"index.html"
+		}
+	},
+	"template":		"main.html",
+	"dependencies":	[
+		"jquery",
+		"AngularJS",
+		"bootstrap",
+		"api"
+	]
+}

@@ -1,0 +1,7 @@
+{
+	"name": "json2",
+	"version": "2.0",
+	"main": [
+		"json2.js"
+	]
+}

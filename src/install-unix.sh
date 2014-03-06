@@ -1,0 +1,2 @@
+#!/bin/sh
+bower install

@@ -1,0 +1,16 @@
+{
+	"name":			"train_sentiment",
+	"files":		{
+		"sentiment.html": {
+			"title":	"AIStock - Sentiment Training",
+			"filename":	"train/sentiment.html"
+		}
+	},
+	"template":		"main.html",
+	"dependencies":	[
+		"jquery",
+		"AngularJS",
+		"bootstrap",
+		"api"
+	]
+}

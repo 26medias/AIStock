@@ -1,0 +1,7 @@
+{
+	"name": "underscore",
+	"version": "1.5.2",
+	"main": [
+		"underscore-min.js"
+	]
+}
