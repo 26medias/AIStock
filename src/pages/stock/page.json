@@ -1,0 +1,17 @@
+{
+	"name":			"stock",
+	"files":		{
+		"chart.html": {
+			"title":	"AIStock - Chart",
+			"filename":	"stock/chart.html"
+		}
+	},
+	"template":		"main.html",
+	"dependencies":	[
+		"jquery",
+		"AngularJS",
+		"bootstrap",
+		"highcharts-ng",
+		"api"
+	]
+}

@@ -5,6 +5,6 @@
 		"jquery":		"latest"
 	},
 	"main": [
-		"https://ajax.googleapis.com/ajax/libs/angularjs/1.2.7/angular.min.js"
+		"https://ajax.googleapis.com/ajax/libs/angularjs/1.2.7/angular.js"
 	]
 }

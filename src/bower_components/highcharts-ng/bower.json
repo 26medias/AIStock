@@ -1,0 +1,14 @@
+{
+	"name": "highcharts-ng",
+	"version": "0.0.4",
+	"main": [
+	"dist/highcharts-ng.js"
+	],
+	"dependencies": {
+		"AngularJS": "latest",
+		"jquery": "latest",
+		"highcharts": "latest"
+	},
+	"devDependencies": {
+	}
+}

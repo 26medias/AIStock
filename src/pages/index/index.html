@@ -1,7 +1,24 @@
-<div class="panel panel-default">
-	<div class="panel-header">Status</div>
-	<div class="panel-body"></div>
-	<div class="panel-footer">
-		<div id="submit" class="btn btn-primary">Submit form</div>ß
+<div ng-controller="mainCtrl">
+	<h3>Tracking data</h3>
+	<div class="panel panel-default" ng-repeat="(symbol, keywords) in tracked">
+		<div class="panel-heading">{{symbol}}</div>
+		<ul class="list-group">
+			<li class="list-group-item" ng-repeat="keyword in keywords">{{keyword}}</li>
+		</ul>
 	</div>
 </div>
+
+<script type="text/javascript">
+	main.controller('mainCtrl', function ($scope) {
+		$scope.tracked = {};
+		$(function() {
+			$.apicall({
+				method:		"stock.tracked",
+				callback:	function(response) {
+					$scope.tracked = response;
+					$scope.$apply();
+				}
+			});
+		});
+	});
+</script>

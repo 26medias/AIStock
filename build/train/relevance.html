@@ -12,12 +12,14 @@
 		
 		<title>AIStock - Relevance Training</title>
 		
-		<script src="http://code.jquery.com/jquery-1.10.2.min.js"></script>
-<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.2.7/angular.min.js"></script>
+		<script src="public/jquery/dist/jquery.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.2.7/angular.js"></script>
 <script src="public/underscore/underscore-min.js"></script>
 <script src="public/json2/json2.js"></script>
 <script src="public/api/api.js"></script>
 <script src="public/bootstrap/./dist/js/bootstrap.js"></script>
+<script src="public/highcharts/highcharts.js"></script>
+<script src="public/highcharts-ng/dist/highcharts-ng.js"></script>
 		<link href="public/bootstrap/./dist/css/bootstrap.css" rel="stylesheet">
 		
 	</head>
@@ -39,7 +41,14 @@
 					</div>
 					<div class="collapse navbar-collapse">
 						<ul class="nav navbar-nav">
-							<li ><a href="../index.html">Status</a></li>
+							
+							<li class="dropdown ">
+								<a href="#" class="dropdown-toggle" data-toggle="dropdown">Charts <b class="caret"></b></a>
+								<ul class="dropdown-menu">
+									<li><a href="stock/chart.html?symbol={{symbol}}" ng-repeat="(symbol, keywords) in tracked">${{symbol}}</a></li>
+								</ul>
+							</li>
+							
 							<li class="dropdown active">
 								<a href="#" class="dropdown-toggle" data-toggle="dropdown">Relevance Training <b class="caret"></b></a>
 								<ul class="dropdown-menu">
@@ -62,7 +71,7 @@
 				__GLOBAL__ = {
 					api:	'http://127.0.0.1:2015'
 				};
-				var main = angular.module('main', []);
+				var main = angular.module('main', ["highcharts-ng"]);
 				main.controller('headerCtrl', function ($scope) {
 					$scope.tracked = {};
 					$(function() {
