@@ -1,0 +1,17 @@
+{
+	"name":			"analyze",
+	"files":		{
+		"index.html": {
+			"title":	"AIStock - Stock analysis",
+			"filename":	"analyze/index.html"
+		}
+	},
+	"template":		"main.html",
+	"dependencies":	[
+		"jquery",
+		"AngularJS",
+		"bootstrap",
+		"highcharts-ng",
+		"api"
+	]
+}

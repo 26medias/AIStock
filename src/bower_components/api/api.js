@@ -12,7 +12,7 @@ $(function() {
 				method:		"",
 				params:		{},
 				callback:	function(data) {},
-				onFail:		function(msg) {console.error(msg);}
+				onFail:		function(msg) {console.info("response error",msg);}
 			},options);
 			
 			var split 	= options.method.split(".");
@@ -21,8 +21,8 @@ $(function() {
 				method:		split[1]
 			};
 			
-			//console.group("JSONP :: "+api.endpoint+"/"+api.method);
-			//console.info("Parameters: ", options.params);
+			console.group("JSONP :: "+api.endpoint+"/"+api.method);
+			console.info("Parameters: ", options.params);
 			
 			$.ajax({
 				url: 		__GLOBAL__.api+"/"+api.endpoint+"/"+api.method+"/jsonp",		// static url for the API calls
@@ -45,11 +45,11 @@ $(function() {
 						}
 					}
 					options.callback(data);
-				//console.groupEnd();
+					console.groupEnd();
 				},
 				error: function(jqXHR, data, errorThrown) {
 					options.onFail("Response Format Error");
-				//console.groupEnd();
+					console.groupEnd();
 				}
 			});
 			
@@ -79,6 +79,26 @@ $(function() {
 			}
 			
 			document.cookie = name+"="+value+expires+"; path=/;"; //  domain=.example.com
+		},
+		
+		getCookie:	function(name) {
+			var nameEQ = name + "=";
+			var ca = document.cookie.split(';');
+			for(var i=0;i < ca.length;i++) {
+				var c = ca[i];
+				while (c.charAt(0)==' ') c = c.substring(1,c.length);
+				if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length,c.length);
+			}
+			return null;
+		},
+		
+		location:		function(page) {
+			//console.trace();
+			document.location = page;
+		},
+		
+		refresh:		function(page) {
+			document.location = document.location;
 		},
 		
 		refresh:		function(page) {

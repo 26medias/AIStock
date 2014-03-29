@@ -1,0 +1,37 @@
+<div ng-controller="mainCtrl">
+	<div class="panel panel-default">
+		<div class="panel-heading">Logging you in...</div>
+		<div class="panel-body">
+			
+		</div>
+	</div>
+</div>
+
+<script type="text/javascript">
+	main.controller('mainCtrl', function ($scope) {
+		
+		$(function() {
+			$scope.params 	= $.getParams();
+			$scope.code 	= $scope.params.code;
+			console.log("$scope.code", $scope.code);
+			$.apicall({
+				method:		"auth.getToken",
+				params: {
+					code:	$scope.code
+				},
+				callback:	function(response) {
+					console.log("response",response);
+					if (response.access_token) {
+						$.cookie('access_token', response.access_token, 365);
+						$.cookie('username', response.username, 365);
+						$.location("index.html");
+					} else {
+						alert("Something went wrong. Please try again.");
+					}
+				}
+			});
+		});
+
+
+	});
+</script>

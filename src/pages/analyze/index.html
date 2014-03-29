@@ -1,0 +1,49 @@
+<div ng-controller="mainCtrl">
+	<div class="panel panel-default">
+		<div class="panel-heading">Stock Analysis - ${{symbol}}</div>
+		<div ng-if="!loading" class="panel-content">
+			<img src="{{data.images.stock}}" alt="HLCO" />
+			<img src="{{data.images.volume}}" alt="Volume" />
+			<img src="{{data.images.stochastic}}" alt="Stochastic" />
+			<img src="{{data.images.aroon}}" alt="Aroon" />
+			<img src="{{data.images.RSI}}" alt="RSI" />
+		</div>
+		<div ng-if="loading" class="panel-content" style="text-align:center;padding:30px;">
+			Please wait while we analyze the financial data...<br />
+			<img src="images/loading.gif" alt="" style="margin:10px;" />
+		</div>
+	</div>
+</div>
+
+<script type="text/javascript">
+	main.controller('mainCtrl', function ($scope) {
+		
+		
+		$scope.analyze	= function(symbol) {
+			console.log("analysing ",symbol);
+			
+			$scope.loading = true;
+			
+			$.apicall({
+				method:		"stock.analyze",
+				params:	{
+					symbol: symbol
+				},
+				callback:	function(response) {
+					$scope.loading 	= false;
+					$scope.data 	= response;
+					console.log("response",response);
+					$scope.$apply();
+				}
+			});
+		}
+		
+		$(function() {
+			
+			$scope.params = $.getParams();
+			$scope.symbol = $scope.params.symbol;
+			
+			$scope.analyze($scope.symbol);
+		});
+	});
+</script>

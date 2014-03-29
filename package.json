@@ -9,9 +9,14 @@
 		"request":		"latest",
 		"redis":		"latest",
 		"ntwitter":		"latest",
+		"twitter":		"latest",
 		"yahoo-finance":"latest",
 		"brain":		"latest",
 		"classifier":	"latest",
+		"toolset":		"latest",
+		"needle":		"latest",
+		"quiche":		"latest",
+		"tradestudio":	"latest",
 		"twig": 		"*"
 	}
 }

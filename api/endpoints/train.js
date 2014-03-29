@@ -18,7 +18,7 @@ api.prototype.init = function(Gamify, callback){
 			require:		['symbol','type'],
 			auth:			false,
 			description:	"List tweets for that symbol",
-			params:			{symbol:"Stock Symbol"},
+			params:			{symbol:"Stock Symbol",type:'relevance/sentiment',perpage:'Tweets per page',page:'Page to show',group:'Bool: Group by found classfication'},
 			status:			'stable',
 			version:		1.0,
 			callback:		function(params, req, res, callback) {
@@ -104,6 +104,13 @@ api.prototype.init = function(Gamify, callback){
 					
 					stack.process(function() {
 						response.data = buffer;
+						
+						if (params.group) {
+							response = _.groupBy(response.data, function(tweet) {
+								return tweet.estimate;
+							});
+						}
+						
 						callback(response);
 					}, true);
 					

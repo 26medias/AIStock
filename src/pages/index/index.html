@@ -1,24 +1,78 @@
 <div ng-controller="mainCtrl">
-	<h3>Tracking data</h3>
-	<div class="panel panel-default" ng-repeat="(symbol, keywords) in tracked">
-		<div class="panel-heading">{{symbol}}</div>
-		<ul class="list-group">
-			<li class="list-group-item" ng-repeat="keyword in keywords">{{keyword}}</li>
-		</ul>
+	<div class="panel panel-default">
+		<div class="panel-heading">Trending Stocks</div>
+		<table class="table table-hover">
+			<thead>
+				<tr>
+					<th>Symbol</th>
+					<th>Name</th>
+					<th>&nbsp;</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr ng-repeat="stock in trending">
+					<td>${{stock.symbol}}</td>
+					<td>{{stock.title}}</td>
+					<td>
+						<div style="text-align:right;" ng-if="!stock.loading">
+							<div class="btn btn-primary btn-xs" ng-click="analyze(stock)">
+								<span class="glyphicon glyphicon-plus-sign"></span> Analyze
+							</div>
+						</div>
+						
+						<img ng-if="stock.loading" src="images/loading.gif" alt="" />
+					</td>
+				</tr>
+			</tbody>
+		</table>
 	</div>
 </div>
 
 <script type="text/javascript">
 	main.controller('mainCtrl', function ($scope) {
-		$scope.tracked = {};
-		$(function() {
+		$scope.trending = [];
+		
+		$scope.analyze	= function(stock) {
+			console.log("analysing ",stock);
+			var symbol = stock.symbol;
+			
+			
+			stock.loading = true;
+			$.location("analyze/index.html?symbol="+symbol);
+			/*
 			$.apicall({
-				method:		"stock.tracked",
+				method:		"stock.analyze",
+				params:	{
+					symbol: symbol
+				},
 				callback:	function(response) {
-					$scope.tracked = response;
+					stock.loading = false;
+					console.log("response",response);
 					$scope.$apply();
 				}
 			});
+			*/
+		}
+		
+		$(function() {
+			console.log("access_token",	$.getCookie('access_token'));
+			console.log("username",		$.getCookie('username'));
+			
+			if ($.getCookie('access_token')) {
+				$.apicall({
+					method:		"trending.getSymbols",
+					params:	{
+						access_token:	$.getCookie('access_token')
+					},
+					callback:	function(response) {
+						console.log("response",response);
+						$scope.trending = response;
+						$scope.$apply();
+					}
+				});
+			} else {
+				document.location = "https://api.stocktwits.com/api/2/oauth/authorize?client_id=fad12fc04b67ab4e&response_type=code&redirect_uri=http://localhost/git/AIStock/build/auth.html&scope=read,watch_lists,publish_messages,publish_watch_lists,direct_messages,follow_users,follow_stocks";
+			}
 		});
 	});
 </script>

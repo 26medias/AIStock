@@ -59,6 +59,11 @@ builder.prototype.init = function() {
 						ncp(scope.base+"/"+scope.buildProfile.src+"/bower_components", scope.base+"/"+scope.buildProfile.output+"/public", function() {
 							console.log("Libs copied from ", scope.base+"/"+scope.buildProfile.src+"/bower_components", " to ", scope.base+"/"+scope.buildProfile.output);
 						});
+						
+						// Copy the images
+						ncp(scope.base+"/"+scope.buildProfile.src+"/images", scope.base+"/"+scope.buildProfile.output+"/images", function() {
+							console.log("Libs copied from ", scope.base+"/"+scope.buildProfile.src+"/images", " to ", scope.base+"/"+scope.buildProfile.output);
+						});
 					});
 				});
 			});

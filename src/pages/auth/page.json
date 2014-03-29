@@ -1,0 +1,17 @@
+{
+	"name":			"stock",
+	"files":		{
+		"auth.html": {
+			"title":	"AIStock - Auth",
+			"filename":	"auth.html"
+		}
+	},
+	"template":		"main.html",
+	"dependencies":	[
+		"jquery",
+		"AngularJS",
+		"bootstrap",
+		"highcharts-ng",
+		"api"
+	]
+}

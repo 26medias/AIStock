@@ -1,5 +1,6 @@
 var _ 					= require('underscore');
 var twitter 			= require('ntwitter');
+var twitter2 			= require('twitter');
 
 
 exports.dataProvider = function (Gamify) {
@@ -8,12 +9,25 @@ exports.dataProvider = function (Gamify) {
 		var scope 				= this;
 		
 		Gamify.log("Twitter Monitoring started...","");
-		
+		/*
 		this.twitter = new twitter({
 			consumer_key: 			'HJoENa2IEb5uIxZhMeDA',
 			consumer_secret: 		'Pnpve4jxXJxfYS5uFTUN7fybYJVJQX3kCgC1KjIMWto',
 			access_token_key: 		'477694698-Y9BbDSByJhIeMvBDvhxWZQ2hDDAl2wytYiadlZ1M',
 			access_token_secret: 	'8XaW45lI1780kf5uYgbrTPPCUsJr3FygeJ0LlJQ4wV0Zx'
+		});
+		*/
+		this.twitter = new twitter({
+			consumer_key: 			'kOnytDS8XsUZsk9Cj9p2kA',
+			consumer_secret: 		'NrG0cM6tVtCjBorRmoru5bdgfqkVzEO81PhpfRx5Y',
+			access_token_key: 		'477694698-wj8yHhyhwe3Tsk7wYTDumFHcJUKP8f1NOYGnz197',
+			access_token_secret: 	'TJrlFmzaon5afdu6ABuWoLRxPl5E8nLpKt9XwOood8zRd'
+		});
+		this.twitter2 = new twitter2({
+			consumer_key: 			'kOnytDS8XsUZsk9Cj9p2kA',
+			consumer_secret: 		'NrG0cM6tVtCjBorRmoru5bdgfqkVzEO81PhpfRx5Y',
+			access_token_key: 		'477694698-wj8yHhyhwe3Tsk7wYTDumFHcJUKP8f1NOYGnz197',
+			access_token_secret: 	'TJrlFmzaon5afdu6ABuWoLRxPl5E8nLpKt9XwOood8zRd'
 		});
 		
 		this.streams			= {};
@@ -55,8 +69,8 @@ exports.dataProvider = function (Gamify) {
 						}
 						
 					});
-					stream.on('error', function (data) {
-						Gamify.log('error!', data);
+					stream.on('error', function (data, something) {
+						Gamify.log('error!', [data, something]);
 					});
 				});
 			}
@@ -69,6 +83,14 @@ exports.dataProvider = function (Gamify) {
 				scope.streams[symbol].keywords[i].destroy();
 			}
 		};
+		
+		this.search	= function(terms, callback) {
+			Gamify.log("Twitter search for ",terms);
+			scope.twitter2.search(terms, function(err, data) {
+				Gamify.log("Twitter response",data);
+				callback(data);
+			});
+		}
 		
 		this.mongo	= new Gamify.mongo({database: Gamify.settings.db});
 		this.mongo.init(function() {

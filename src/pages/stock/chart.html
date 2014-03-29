@@ -1,16 +1,60 @@
 <div ng-controller="mainCtrl">
 	<div class="panel panel-default">
-		<div class="panel-heading">Status</div>
+		<div class="panel-heading">Prices</div>
 		<div class="panel-body">
 			<highchart id="chart1" config="chartConfig" class="span10"></highchart>
+		</div>
+	</div>
+	<div class="panel panel-default">
+		<div class="panel-heading">Percentage Change</div>
+		<div class="panel-body">
+			<highchart id="chart1" config="chartConfigPct" class="span10"></highchart>
 		</div>
 	</div>
 </div>
 
 <script type="text/javascript">
 	main.controller('mainCtrl', function ($scope) {
-
+		
 		$scope.chartConfig = {
+			options: {
+				chart: {
+					type: 'line',
+					zoomType: 'x',
+					plotShadow: true
+				},
+				plotOptions:	{
+					line: {
+						marker: {
+							enabled: false
+						}
+					},
+					area: {
+						marker: {
+							enabled: false
+						}
+					}
+				}
+			},
+			series: [],
+			title: {
+				text: "loading..."
+			},
+			yAxis: {
+				startOnTick: true,
+				endOnTick: true
+			},
+			xAxis: {
+				type: 'datetime',
+				title: {
+					text: null
+				}
+			},
+			loading: false
+		}
+		
+		
+		$scope.chartConfigPct = {
 			options: {
 				chart: {
 					type: 'line',
@@ -53,7 +97,8 @@
 				method:		"stock.chart",
 				params: {
 					symbol:		$scope.symbol,
-					limit:		10000
+					limit:		10000,
+					types:		['price']
 				},
 				callback:	function(response) {
 
@@ -71,6 +116,38 @@
 
 					$scope.chartConfig.yAxis.min = min;
 
+					$scope.$apply();
+				}
+			});
+			
+			$.apicall({
+				method:		"stock.chart",
+				params: {
+					symbol:		$scope.symbol,
+					types:		['pctchange'],
+					limit:		10000
+				},
+				callback:	function(response) {
+					
+					console.log("response",response);
+					
+					// Search for the minimum (Math.min return NaN, wtf?)
+					var min = 1;
+					var max = -1;
+					_.each(response[0].data, function(n) {
+						if (n < min) {
+							min = n;
+						}
+						if (n > max) {
+							max = n;
+						}
+					});
+					
+					$scope.chartConfigPct.series = response;
+					
+					$scope.chartConfigPct.yAxis.min = min;
+					$scope.chartConfigPct.yAxis.max = max;
+					
 					$scope.$apply();
 				}
 			});
