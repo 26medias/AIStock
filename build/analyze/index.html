@@ -93,11 +93,12 @@
 	<div class="panel panel-default">
 		<div class="panel-heading">Stock Analysis - ${{symbol}}</div>
 		<div ng-if="!loading" class="panel-content">
-			<img src="{{data.images.stock}}" alt="HLCO" />
-			<img src="{{data.images.volume}}" alt="Volume" />
-			<img src="{{data.images.stochastic}}" alt="Stochastic" />
-			<img src="{{data.images.aroon}}" alt="Aroon" />
-			<img src="{{data.images.RSI}}" alt="RSI" />
+			<img ng-src="{{data.images.stock}}" title="HLCO" />
+			<img ng-src="{{data.images.volume}}" title="Volume" />
+			<img ng-src="{{data.images.stochastic}}" title="Stochastic" />
+			<img ng-src="{{data.images.aroon}}" title="Aroon" />
+			<img ng-src="{{data.images.RSI}}" title="RSI" />
+			<img ng-src="{{data.images.DSPO}}" title="DSPO" />
 		</div>
 		<div ng-if="loading" class="panel-content" style="text-align:center;padding:30px;">
 			Please wait while we analyze the financial data...<br />

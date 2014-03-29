@@ -1,7 +1,7 @@
 <div ng-controller="mainCtrl">
 	<div class="panel panel-default">
 		<div class="panel-heading">Trending Stocks</div>
-		<table class="table table-hover">
+		<table ng-if="!loading" class="table table-hover">
 			<thead>
 				<tr>
 					<th>Symbol</th>
@@ -25,12 +25,17 @@
 				</tr>
 			</tbody>
 		</table>
+		<div ng-if="loading" class="panel-content" style="text-align:center;padding:30px;">
+			Please wait while we find the trending stocks...<br />
+			<img src="images/loading.gif" alt="" style="margin:10px;" />
+		</div>
 	</div>
 </div>
 
 <script type="text/javascript">
 	main.controller('mainCtrl', function ($scope) {
 		$scope.trending = [];
+		$scope.loading 	= true;
 		
 		$scope.analyze	= function(stock) {
 			console.log("analysing ",stock);
@@ -67,6 +72,7 @@
 					callback:	function(response) {
 						console.log("response",response);
 						$scope.trending = response;
+						$scope.loading 	= false;
 						$scope.$apply();
 					}
 				});

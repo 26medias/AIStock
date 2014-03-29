@@ -21,8 +21,8 @@ $(function() {
 				method:		split[1]
 			};
 			
-			console.group("JSONP :: "+api.endpoint+"/"+api.method);
-			console.info("Parameters: ", options.params);
+			//console.group("JSONP :: "+api.endpoint+"/"+api.method);
+			//console.info("Parameters: ", options.params);
 			
 			$.ajax({
 				url: 		__GLOBAL__.api+"/"+api.endpoint+"/"+api.method+"/jsonp",		// static url for the API calls
@@ -45,11 +45,11 @@ $(function() {
 						}
 					}
 					options.callback(data);
-					console.groupEnd();
+					//console.groupEnd();
 				},
 				error: function(jqXHR, data, errorThrown) {
 					options.onFail("Response Format Error");
-					console.groupEnd();
+					//console.groupEnd();
 				}
 			});
 			

@@ -189,20 +189,20 @@ api.prototype.init = function(Gamify, callback){
 				// First, we need to get the financial data
 				stack.add(function(p, cb) {
 					// Go back 30 days
-					Gamify.data.stock.getHistoricalData(symbol, new Date(new Date().getTime()-(1000*60*60*24*30*3)), new Date(), function(response) {
+					Gamify.data.stock.getHistoricalData(symbol, new Date(new Date().getTime()-(1000*60*60*24*30*12)), new Date(), function(response) {
 						output.financial = response;
 						cb();
 					});
 				}, {});
 				
 				// Now, we get the twitter data
-				stack.add(function(p, cb) {
+				/*stack.add(function(p, cb) {
 					// Go back 30 days
 					Gamify.data.twitter.search('$'+params.symbol, function(response) {
 						output.tweets = response;
 						cb();
 					});
-				}, {});
+				}, {});*/
 				
 				stack.process(function() {
 					
@@ -245,6 +245,11 @@ api.prototype.init = function(Gamify, callback){
 					// RSI
 					processed.RSI 			= tradestudio.indicators.RSI(tradeData);
 					
+					// DSPO (Two pole smoother - DSP)
+					processed.DSPO 			= tradestudio.indicators.DSPOscillator(tradeData, {
+						CutoffPeriod:	20
+					});
+					
 					output.processed 		= processed;
 					
 					
@@ -258,7 +263,7 @@ api.prototype.init = function(Gamify, callback){
 					// 				CHARTS
 					////////////////////////////////////////////
 					
-					
+					/*
 					// Candle Chart
 					var candleChart = new gimage.candlestick({
 						width:	800,
@@ -266,6 +271,18 @@ api.prototype.init = function(Gamify, callback){
 					});
 					candleChart.fromYahoo(output.financial);
 					output.images.stock 	= candleChart.render();
+					*/
+					
+					// Stock Chart as a line
+					var stockChart = new gimage.line({
+						width:	800,
+						height:	200,
+						autoscale:	true
+					});
+					stockChart.fromYahoo(output.financial);
+					output.images.stock 	= stockChart.render();
+					
+					
 					
 					
 					// Volume Chart
@@ -289,7 +306,9 @@ api.prototype.init = function(Gamify, callback){
 							color:	'DDDDDD',
 							from:	0.3,
 							to:		0
-						}]
+						}],
+						xlines:	[30,70],
+						autoscale:	false
 					});
 					stochasticChart.fromTradeStudio(processed.stochastic);
 					output.images.stochastic 	= stochasticChart.render();
@@ -308,7 +327,9 @@ api.prototype.init = function(Gamify, callback){
 							color:	'DDDDDD',
 							from:	0.3,
 							to:		0
-						}]
+						}],
+						xlines:	[30,70],
+						autoscale:	false
 					});
 					aroonChart.fromTradeStudio(processed.aroon);
 					output.images.aroon 	= aroonChart.render();
@@ -318,18 +339,34 @@ api.prototype.init = function(Gamify, callback){
 					var RSIChart = new gimage.line({
 						width:	800,
 						height:	100,
-						bands:	[{
-							color:	'DDDDDD',
-							from:	1,
-							to:		0.7
-						},{
-							color:	'DDDDDD',
-							from:	0.3,
-							to:		0
-						}]
+						xlines:	[30,70],
+						autoscale:	false
 					});
 					RSIChart.fromTradeStudio(processed.RSI);
 					output.images.RSI 	= RSIChart.render();
+					
+					
+					// DSP Oscillator (using 2 pole smoother) Chart
+					var DSPOChart = new gimage.line({
+						width:	800,
+						height:	100,
+						xlines:	[0]
+					});
+					DSPOChart.fromTradeStudio(processed.DSPO);
+					output.images.DSPO 	= DSPOChart.render();
+					
+					
+					
+					
+					var chart = quiche('line');
+					chart.setTitle('Something with lines');
+					chart.addData([3000, 2900, 1500], 'Blah', '008000');
+					chart.addData([3100, 2850, 2900], 'Asdf', '0000FF');
+					chart.addAxisLabels('x', ['1800', '1900', '2000']);
+					chart.setAutoScaling();
+					chart.setTransparentBackground();
+					
+					output.images.quiche = chart.getUrl(true);
 					
 					
 					callback(output);
@@ -373,7 +410,7 @@ api.prototype.init = function(Gamify, callback){
 					var tradeData 		= tradestudio.utils.fromYahoo(output.financial);
 					
 					// List the indicators we want to use
-					var indicators 		= ['stochastic', 'aroon', 'RSI'];
+					var indicators 		= ['stochastic', 'aroon', 'RSI', 'TwoPoleSuperSmoother'];
 					
 					_.each(indicators, function(indicator) {
 						var datasets = tradestudio.indicators[indicator](tradeData);
@@ -386,7 +423,6 @@ api.prototype.init = function(Gamify, callback){
 								_.each(dataset.data, function(datapoint) {
 									var signal	= dataset.signal(datapoint[1]);
 									var date	= datapoint[0].standard();
-									console.log(">>",date, signal);
 									
 									if (!output.signals[date]) {
 										output.signals[date] = {};
@@ -400,7 +436,7 @@ api.prototype.init = function(Gamify, callback){
 						//output.processed[indicator] = datasets;
 					});
 					
-					delete output.financial;
+					//delete output.financial;
 					
 					callback(output);
 				}, false);
