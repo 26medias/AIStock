@@ -67,8 +67,6 @@ api.prototype.init = function(Gamify, callback){
 					types: 'array'
 				});
 				
-				Gamify.log("params", params);
-				
 				if (params.tick) {
 					scope.mongo.find({
 						collection:	'stocks',
@@ -379,11 +377,19 @@ api.prototype.init = function(Gamify, callback){
 			require:		['symbol'],
 			auth:			false,
 			description:	"Process the stock data for use by a Neural Network",
-			params:			{symbol:'Stock Symbol to analyze, format $SYMBOL'},
+			params:			{symbol:'Stock Symbol to analyze, format SYMBOL', days:	"Number of days to pull."},
 			status:			'stable',
 			version:		1.2,
 			callback:		function(params, req, res, callback) {
 				var stack = new Gamify.stack();
+				
+				params = _.extend({
+					days:	12*30
+				}, params);
+				
+				params	= scope.Gamify.api.fixTypes(params, {
+					days:		'number'
+				});
 				
 				var output = {
 					signals:	{},		// Indicators signals:	[-1;0;1]
@@ -396,8 +402,13 @@ api.prototype.init = function(Gamify, callback){
 				// First, we need to get the financial data
 				stack.add(function(p, cb) {
 					// Go back 30 days
-					Gamify.data.stock.getHistoricalData(symbol, new Date(new Date().getTime()-(1000*60*60*24*30*12)), new Date(), function(response) {
-						output.financial = response;
+					Gamify.data.stock.getHistoricalData(symbol, new Date(new Date().getTime()-(1000*60*60*24*params.days)), new Date(), function(response) {
+						output.financial 	= response;
+						
+						// Index by date
+						output.stock		= _.indexBy(response, function(point) {
+							return new Date(point.date).standard();
+						});
 						cb();
 					});
 				}, {});
@@ -410,7 +421,14 @@ api.prototype.init = function(Gamify, callback){
 					var tradeData 		= tradestudio.utils.fromYahoo(output.financial);
 					
 					// List the indicators we want to use
-					var indicators 		= ['stochastic', 'aroon', 'RSI', 'TwoPoleSuperSmoother'];
+					var indicators 		= ['stochastic', 'aroon', 'RSI', 'DSPOscillator'];
+					
+					// Get the futurePrice data
+					var future			= tradestudio.indicators.futurePrices(tradeData, {period:10}, function(v) {
+						return new Date(v).standard();
+					});
+					
+					output.future = future;
 					
 					_.each(indicators, function(indicator) {
 						var datasets = tradestudio.indicators[indicator](tradeData);
@@ -425,10 +443,18 @@ api.prototype.init = function(Gamify, callback){
 									var date	= datapoint[0].standard();
 									
 									if (!output.signals[date]) {
-										output.signals[date] = {};
+										output.signals[date] = {
+											input:	{},
+											output:	0
+										};
 									}
 									
-									output.signals[date][dataset.name] = signal;
+									output.signals[date].input[dataset.name] 	= signal;
+									if (output.future[date]) {
+										output.signals[date].output 			= output.future[date];
+									} else {
+										output.signals[date].output				= false;
+									}
 								});
 							}
 						});

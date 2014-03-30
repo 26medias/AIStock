@@ -21,6 +21,7 @@
 <script src="public/highcharts/highcharts.js"></script>
 <script src="public/highcharts-ng/dist/highcharts-ng.js"></script>
 		<link href="public/bootstrap/./dist/css/bootstrap.css" rel="stylesheet">
+<link href="public/examples/custom.css" rel="stylesheet">
 		
 	</head>
 	<body ng-app="main">
@@ -89,42 +90,327 @@
 			
 			<!-- Begin page content -->
 			<div class="container" style="padding-top: 80px;">
-				<div ng-controller="mainCtrl">
-	<div class="panel panel-default">
-		<div class="panel-heading">Stock Analysis - ${{symbol}}</div>
-		<div ng-if="!loading" class="panel-content">
-			<img ng-src="{{data.images.stock}}" title="HLCO" />
-			<img ng-src="{{data.images.volume}}" title="Volume" />
-			<img ng-src="{{data.images.stochastic}}" title="Stochastic" />
-			<img ng-src="{{data.images.aroon}}" title="Aroon" />
-			<img ng-src="{{data.images.RSI}}" title="RSI" />
-			<img ng-src="{{data.images.DSPO}}" title="DSPO" />
-		</div>
-		<div ng-if="loading" class="panel-content" style="text-align:center;padding:30px;">
-			Please wait while we analyze the financial data...<br />
-			<img src="images/loading.gif" alt="" style="margin:10px;" />
+				<style type="text/css">
+	img.responsive {
+		width:	100%;
+	}
+	
+	div.weather {
+		display:		table;
+		width:			100%;
+	}
+	div.weather > div.day {
+		display:		table-cell;
+		padding:		20px 10px;
+		text-align:		center;
+		background-position:	center center;
+		background-repeat:		no-repeat;
+	}
+	div.weather > div.day.blue {
+		background-image:	url('images/weather/blue-sky.jpg');
+	}
+	div.weather > div.day.grey {
+		background-image:	url('images/weather/grey-sky.jpg');
+	}
+	div.weather > div.day.night {
+		background-image:	url('images/weather/night-sky.jpg');
+	}
+	div.weather > div.day.storm {
+		background-image:	url('images/weather/storm-sky.jpg');
+	}
+	div.weather > div.day > div {
+		position:		relative;
+	}
+	div.weather > div.day > div > img.icon {
+		width:			100%;
+		display:		block;
+	}
+	div.weather > div.day > div > div.day {
+		font-size:		18px;
+		font-weight:	bold;
+		text-align:		center;
+		color:			#FFFFFF;
+		cursor:			default;
+	}
+	div.weather > div.day:hover > div > div.day {
+		color:			#333333;
+	}
+	div.weather > div.day > div > div.date {
+		font-size:		14px;
+		font-weight:	bold;
+		text-align:		center;
+		color:			#FFFFFF;
+		cursor:			default;
+	}
+	div.weather > div.day:hover > div > div.date {
+		color:			#333333;
+	}
+	div.weather > div.day > div > div.directionLabel {
+		font-size:		24px;
+		font-weight:	bold;
+		text-align:		center;
+		color:			#FFFFFF;
+		cursor:			default;
+	}
+	div.weather > div.day:hover > div > div.directionLabel {
+		color:			#333333;
+	}
+	div.weather > div.day > div > div.odds {
+		font-size:		14px;
+		font-weight:	bold;
+		text-align:		right;
+		color:			#FFFFFF;
+		cursor:			default;
+		position:		absolute;
+		top:			0;
+		right:			0;
+		line-height:	14px;
+		padding-top:	2px;
+	}
+	div.weather > div.day > div > div.odds > span {
+		font-weight:	default;
+		display:		block;
+		font-size:		12px;
+	}
+	div.weather > div.day:hover > div > div.odds {
+		color:			#333333;
+	}
+	div.weather > div.day > div > div.direction {
+		position:		absolute;
+		top:			0;
+		left:			0;
+	}
+	
+</style>
+<div ng-controller="mainCtrl">
+	
+	<div ng-if="!loading.neuralForecast" class="panel panel-default">
+		<div class="panel-heading">Weather Forecast for ${{symbol}}</div>
+		<div class="panel-content">
+			<div class="weather">
+				<div class="day" ng-repeat="item in forecast" ng-if="$index < 5" ng-class="{blue:item.from>=60&&item.direction=='up',grey:item.from>=60&&item.direction=='down',night:item.from<60||item.direction=='unknown',storm:item.from>70&&item.direction=='down'}">
+					<div>
+						
+						<img ng-if="item.from>=60&&item.from<70&&item.direction=='up'" src="images/weather/sun-cloudy.png" class="icon" />
+						<img ng-if="item.from>=70&&item.direction=='up'" src="images/weather/sun-single.png" class="icon" />
+						<img ng-if="item.from>=60&&item.from<70&&item.direction=='down'" src="images/weather/cloudy.png" class="icon" />
+						<img ng-if="item.from>=70&&item.from<85&&item.direction=='down'" src="images/weather/rain.png" class="icon" />
+						<img ng-if="item.from>=85&&item.direction=='down'" src="images/weather/thunder.png" class="icon" />
+						<img ng-if="item.from>=60&&item.direction=='unknown'" src="images/weather/wind.png" class="icon" />
+						<img ng-if="item.from<60" src="images/weather/wind.png" class="icon" />
+						
+						<div class="day">{{item.date|date:'EEEE'}}</div>
+						<div class="date">{{item.date|date}}</div>
+						<div class="odds">
+							Odds: 
+							<span ng-if="item.from==item.to">
+								{{item.from}}%
+							</span>
+							<span ng-if="item.from!=item.to">
+								{{item.from}}% - {{item.to}}%
+							</span>
+						</div>
+						<div class="directionLabel">{{item.direction|uppercase}}</div>
+						<div class="direction">
+							<button ng-if="item.direction=='up'" type="button" class="btn btn-success btn-lg">
+								<span class="glyphicon glyphicon-chevron-up"></span>
+							</button>
+							<button ng-if="item.direction=='down'" type="button" class="btn btn-danger btn-lg">
+								<span class="glyphicon glyphicon-chevron-down"></span>
+							</button>
+							<button ng-if="item.direction=='unknown'" type="button" class="btn btn-info btn-lg">
+								<span class="glyphicon glyphicon-minus"></span>
+							</button>
+						</div>
+					</div>
+				</div>
+			</div>
 		</div>
 	</div>
+	
+	<div ng-if="loading.neuralForecast" class="panel-content" style="text-align:center;padding:30px;">
+		Please wait while we prepare the Weather Map...<br />
+		<img src="images/loading.gif" alt="" style="margin:10px;" />
+	</div>
+	
+	<div class="row">
+		<div class="col-md-8">
+			<div ng-if="!loading.analysis">
+				
+				<div class="panel panel-default">
+					<div class="panel-heading">Historical Prices - ${{symbol}}</div>
+					<div class="panel-content">
+						<img class="responsive" ng-src="{{data.images.stock}}" title="HLCO" />
+						<img class="responsive" ng-src="{{data.images.volume}}" title="Volume" />
+					</div>
+				</div>
+				
+				<div class="panel panel-default">
+					<div class="panel-heading">Technical Analysis - ${{symbol}}</div>
+					<div class="panel-content">
+						<img class="responsive" ng-src="{{data.images.stochastic}}" title="Stochastic" />
+						<img class="responsive" ng-src="{{data.images.aroon}}" title="Aroon" />
+						<img class="responsive" ng-src="{{data.images.RSI}}" title="RSI" />
+						<img class="responsive" ng-src="{{data.images.DSPO}}" title="DSPO" />
+					</div>
+				</div>
+				
+			</div>
+			
+			<div ng-if="loading.analysis" class="panel-content" style="text-align:center;padding:30px;">
+				Please wait while we analyze the financial data...<br />
+				<img src="images/loading.gif" alt="" style="margin:10px;" />
+			</div>
+		</div>
+		<div class="col-md-4">
+			
+			<div ng-if="!loading.neuralTraining">
+				<div class="panel panel-default">
+					<div class="panel-heading">Neural Net</div>
+					<div class="panel-content">
+						<img class="responsive" ng-src="{{neuralnet.chart}}" title="Neural Net Test Chart" />
+					</div>
+					<table class="table table-hover">
+						<tbody>
+							<tr>
+								<td style="width:50%;">
+									Overall Accuracy:
+								</td>
+								<td>
+									{{neuralnet.score}}
+								</td>
+							</tr>
+							<tr>
+								<td style="width:50%;">
+									Weighted Accuracy:
+								</td>
+								<td>
+									{{neuralnet.wscore}}
+								</td>
+							</tr>
+						</tbody>
+					</table>
+				</div>
+			</div>
+				
+			<div ng-if="loading.neuralTraining" class="panel-content" style="text-align:center;padding:30px;">
+				Please wait while we train and test the neural net...<br />
+				<img src="images/loading.gif" alt="" style="margin:10px;" />
+			</div>
+			
+			
+			
+			<div ng-if="!loading.neuralForecast">
+				<div class="panel panel-default">
+					<div class="panel-heading">Neural Net Forecast</div>
+					<table class="table table-hover">
+						<thead>
+							<tr>
+								<th>Date</th>
+								<th>Price</th>
+								<th>Odds</th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr ng-repeat="item in forecast" ng-class="{success:item.direction=='up',danger:item.direction=='down',active:item.direction=='unknown'}">
+								<td>{{item.date|date}}</td>
+								<td>
+									<button ng-if="item.direction=='up'" type="button" class="btn btn-success btn-sm">
+										<span class="glyphicon glyphicon-chevron-up"></span>
+									</button>
+									<button ng-if="item.direction=='down'" type="button" class="btn btn-danger btn-sm">
+										<span class="glyphicon glyphicon-chevron-down"></span>
+									</button>
+									<button ng-if="item.direction=='unknown'" type="button" class="btn btn-info btn-sm">
+										<span class="glyphicon glyphicon-minus"></span>
+									</button>
+								</td>
+								<td>
+									<span ng-if="item.from==item.to">
+										{{item.from}}%
+									</span>
+									<span ng-if="item.from!=item.to">
+										{{item.from}}% - {{item.to}}%
+									</span>
+								</td>
+							</tr>
+						</tbody>
+					</table>
+				</div>
+			</div>
+				
+			<div ng-if="loading.neuralForecast" class="panel-content" style="text-align:center;padding:30px;">
+				Please wait while we forecast the prices...<br />
+				<img src="images/loading.gif" alt="" style="margin:10px;" />
+			</div>
+		</div>
+	</div>
+	
 </div>
 
 <script type="text/javascript">
 	main.controller('mainCtrl', function ($scope) {
-		
+		$scope.loading = {
+			analysis:		true,
+			neuralTraining:	true,
+			neuralForecast:	true,
+			weather:		true
+		};
 		
 		$scope.analyze	= function(symbol) {
 			console.log("analysing ",symbol);
 			
-			$scope.loading = true;
-			
+			$scope.loading.analysis = true;
 			$.apicall({
 				method:		"stock.analyze",
 				params:	{
 					symbol: symbol
 				},
 				callback:	function(response) {
-					$scope.loading 	= false;
-					$scope.data 	= response;
-					console.log("response",response);
+					$scope.loading.analysis = false;
+					$scope.data 			= response;
+					console.log("Analysis Response",response);
+					$scope.$apply();
+				}
+			});
+		}
+		
+		$scope.neuralTrain	= function(symbol) {
+			console.log("Training Neural Net for ",symbol);
+			
+			$scope.loading.neuralTraining 	= true;
+			$.apicall({
+				method:		"train.stock",
+				params:	{
+					symbol: symbol,
+					name:	symbol
+				},
+				callback:	function(response) {
+					$scope.loading.neuralTraining 	= false;
+					$scope.neuralnet 				= response;
+					console.log("Test Response",response);
+					$scope.$apply();
+					
+					// Now we can check the forecast
+					$scope.neuralForecast(symbol);
+				}
+			});
+		}
+		
+		$scope.neuralForecast	= function(symbol) {
+			console.log("Neural Net Forecasting for ",symbol);
+			
+			$scope.loading.neuralForecast 	= true;
+			$.apicall({
+				method:		"neuralnet.forecast",
+				params:	{
+					symbol: symbol,
+					name:	symbol
+				},
+				callback:	function(response) {
+					$scope.loading.neuralForecast 	= false;
+					$scope.forecast	= response;
+					console.log("Forecast Response",response);
 					$scope.$apply();
 				}
 			});
@@ -136,6 +422,7 @@
 			$scope.symbol = $scope.params.symbol;
 			
 			$scope.analyze($scope.symbol);
+			$scope.neuralTrain($scope.symbol);
 		});
 	});
 </script>

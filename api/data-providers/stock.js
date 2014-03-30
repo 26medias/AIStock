@@ -349,60 +349,23 @@ exports.dataProvider = function (Gamify) {
 									from: 		from2.getFullYear()+'-'+(from2.getMonth()+1)+'-'+from2.getDate(),
 									to: 		to2.getFullYear()+'-'+(to2.getMonth()+1)+'-'+to2.getDate(),
 								}, function (err, quotes, url, symbol) {
-									console.log("Yahoo responded...",quotes.length);
-									
-									
-									if (quotes && quotes.length>0) {
+									if (err) {
 										
-										// Now we check for dates not available
-										var availableDates = [];
-										_.each(quotes, function(quote) {
-											availableDates.push(new Date(quote.date).standard());
-										});
-										
-										var unavailableDates = [];
-										_.each(dateGroup, function(date) {
-											if (!_.contains(availableDates, date.standard())) {
-												unavailableDates.push(date);
-											}
-										});
-										Gamify.log("Unavailable Dates", unavailableDates);
-										
-										
-										
-										// Insert the data if missing
+										// Insert the missing data
 										var stack = new Gamify.stack();
 										
-										_.each(quotes, function(quote) {
+										_.each(dateGroup, function(date) {
 											// Check if we need that date
 											stack.add(function(p2, cb2) {
 												scope.mongo.update({
 													collection:	"historical",
 													query:	{
-														date:	new Date(quote.date)
-													},
-													data:	{
-														$set:	_.extend(quote, {indicators:{}})
-													}
-												}, function() {
-													cb2();
-												});
-											});
-										});
-										
-										
-										// Mark the unavaible dates as unavailable, not ask again
-										_.each(unavailableDates, function(unavailableDate) {
-											stack.add(function(p2, cb2) {
-												
-												scope.mongo.update({
-													collection:	"historical",
-													query:	{
-														date:	new Date(unavailableDate)
+														date:	new Date(date),
+														symbol:	symbol
 													},
 													data:	{
 														$set:	{
-															date:		new Date(unavailableDate),
+															date:		new Date(date),
 															available:	false,
 															symbol:		symbol
 														}
@@ -411,15 +374,85 @@ exports.dataProvider = function (Gamify) {
 													cb2();
 												});
 											});
-										})
+										});
 										
 										stack.process(function() {
 											cb();
-										}, true);	// async
+										});
 									} else {
-										cb();
+										console.log("Yahoo responded...",quotes.length);
+										
+										
+										if (quotes && quotes.length>0) {
+											
+											// Now we check for dates not available
+											var availableDates = [];
+											_.each(quotes, function(quote) {
+												availableDates.push(new Date(quote.date).standard());
+											});
+											
+											var unavailableDates = [];
+											_.each(dateGroup, function(date) {
+												if (!_.contains(availableDates, date.standard())) {
+													unavailableDates.push(date);
+												}
+											});
+											Gamify.log("Unavailable Dates", unavailableDates);
+											
+											
+											
+											// Insert the data if missing
+											var stack = new Gamify.stack();
+											
+											_.each(quotes, function(quote) {
+												// Check if we need that date
+												stack.add(function(p2, cb2) {
+													scope.mongo.update({
+														collection:	"historical",
+														query:	{
+															date:	new Date(quote.date),
+															symbol:	symbol
+														},
+														data:	{
+															$set:	_.extend(quote, {indicators:{}})
+														}
+													}, function() {
+														cb2();
+													});
+												});
+											});
+											
+											
+											// Mark the unavaible dates as unavailable, not ask again
+											_.each(unavailableDates, function(unavailableDate) {
+												stack.add(function(p2, cb2) {
+													
+													scope.mongo.update({
+														collection:	"historical",
+														query:	{
+															date:	new Date(unavailableDate),
+															symbol:	symbol
+														},
+														data:	{
+															$set:	{
+																date:		new Date(unavailableDate),
+																available:	false,
+																symbol:		symbol
+															}
+														}
+													}, function() {
+														cb2();
+													});
+												});
+											})
+											
+											stack.process(function() {
+												cb();
+											}, true);	// async
+										} else {
+											cb();
+										}
 									}
-									
 								});
 							}, {});
 						}
