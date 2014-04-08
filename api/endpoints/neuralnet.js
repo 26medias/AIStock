@@ -2,6 +2,9 @@ var _ 					= require('underscore');
 var qs 					= require("querystring");
 var classifier 			= require("classifier");
 var brain 				= require("brain");
+var ts 					= require("timeseries-analysis");
+var gimage 				= require('google-image-chart').charts;
+var Rainbow 			= require('google-image-chart').colors;
 
 // Gonna need that
 Date.prototype.standard = function() {
@@ -34,6 +37,49 @@ api.prototype.init = function(Gamify, callback){
 			}
 		},
 		
+		test: {
+			require:		['symbol'],
+			auth:			false,
+			description:	"Get the data fed to the Neural Net",
+			params:			{symbol:"Stock Symbol"},
+			status:			'stable',
+			version:		1.0,
+			callback:		function(params, req, res, callback) {
+				
+				
+				params	= scope.Gamify.api.fixTypes(params, {
+					days:		'number',
+					indicators:	'array',
+					train:		'bool'
+				});
+				
+				params = _.extend({
+					days:		12*30,
+					nnready:	true,
+					indicators:	['stochastic', 'aroon', 'RSI', 'DSPOscillator']
+				}, params);
+				
+				scope.Gamify.api.execute("stock","getNeuralData", {
+					symbol:		params.symbol,
+					nnready:	true,
+					days:		params.days,
+					indicators:	params.indicators,
+					output:		params.output
+				}, function(nnSignal) {
+					if (params.train) {
+						Gamify.service.brain.train({
+							data:	nnSignal
+						}, function(response) {
+							callback(response);
+						});
+					} else {
+						callback(nnSignal);
+					}
+				});
+				
+			}
+		},
+		
 		
 		forecast: {
 			require:		['symbol','name'],
@@ -43,6 +89,8 @@ api.prototype.init = function(Gamify, callback){
 			status:			'stable',
 			version:		1.0,
 			callback:		function(params, req, res, callback) {
+				
+				params.name = params.name.toLowerCase();
 				
 				scope.mongo.find({
 					collection:	'neuralnets',
@@ -212,6 +260,187 @@ api.prototype.init = function(Gamify, callback){
 				});
 			}
 		},
+		
+		
+		test2: {
+			require:		['symbol'],
+			auth:			false,
+			description:	"Forecast the price direction using the Neural Net",
+			params:			{symbol:"Stock Symbol", name:"Name of the Neural Net in the db"},
+			status:			'stable',
+			version:		1.0,
+			callback:		function(params, req, res, callback) {
+				
+				params = _.extend({
+					symbol:		'FB',
+					days:		30,
+					threshold:	10,
+					grid:		40
+				}, params);
+				
+				Gamify.log("params", params);
+				
+				Gamify.data.stock.getHistoricalData(params.symbol, new Date(new Date().getTime()-(1000*60*60*24*params.days)), new Date(), function(response) {
+					//callback(response);
+					//return false;
+					var output = [];
+					
+					
+					var t_stats 	= new ts.main(ts.adapter.fromDB(response));
+					
+					// Find the supports and resistances
+					var t_high 		= new ts.main(ts.adapter.fromDB(response, {use:'high'}));
+					var t_low 		= new ts.main(ts.adapter.fromDB(response, {use:'low'}));
+					var supports 	= t_low.supports({
+						threshold:	params.threshold,
+						grid:		params.grid,
+						stats:		true
+					});
+					var resistances = t_high.supports({
+						threshold:	params.threshold,
+						grid:		params.grid,
+						stats:		true
+					});
+					
+					
+					Gamify.log("supports", supports);
+					Gamify.log("resistances", resistances);
+					
+					
+					var t 		= new ts.main(ts.adapter.fromDB(response));
+					
+					// Support/resistance chart
+					var chart = new gimage.line({
+						width:	800,
+						height:	200,
+						bands:	[],
+						xlines:	[],
+						autoscale:	true
+					});
+					chart.fromTimeseries(t.output());
+					var sup_res_lines = [];
+					
+					var supp_ress_min = Math.min(_.min(_.map(supports, function(item) { return item.count; })), _.min(_.map(resistances, function(item) { return item.count; })));
+					var supp_ress_max = Math.max(_.max(_.map(supports, function(item) { return item.count; })), _.max(_.map(resistances, function(item) { return item.count; })));
+					
+					
+					Gamify.log("supp_ress_min", supp_ress_min);
+					Gamify.log("supp_ress_max", supp_ress_max);
+					
+					// Create the color range
+					var rainbow 	= new Rainbow();
+					rainbow.setSpectrum("4AA7D9","C75C5C");
+					rainbow.setNumberRange(supp_ress_min, supp_ress_max);
+					
+					// Add supports
+					_.each(supports, function(item) {
+						sup_res_lines.push({
+							name:	"supp_"+item.price,
+							data:	[[new Date(),item.price],[new Date(),item.price]],
+							color:	rainbow.colorAt(item.count)
+						});
+					});
+					_.each(resistances, function(item) {
+						sup_res_lines.push({
+							name:	"ress_"+item.price,
+							data:	[[new Date(),item.price],[new Date(),item.price]],
+							color:	rainbow.colorAt(item.count)
+						});
+					});
+					chart.fromTradeStudio(sup_res_lines);
+					output.push({
+						name:	'Supports/resistances',
+						chart:	chart.render()
+					});
+					
+					
+					
+					
+					var t 		= new ts.main(ts.adapter.fromDB(response));
+					t.dsp_itrend({alpha: 0.7});
+					output.push({
+						name:	'test',
+						chart:	t.chart({main:true})
+					});
+					
+					
+					
+					// Testing the save function
+					var t 			= new ts.main(ts.adapter.fromDB(response));
+					t.smoother({period:10}).save('smooth').reset().lwma({period:10}).smoother({period:5}).save('signal');
+					output.push({
+						name:	'Multi-set',
+						chart:	t.chart({main:false})
+					});
+					
+					
+					
+					
+					var t 			= new ts.main(ts.adapter.fromDB(response));
+					t.smoother({period:10});
+					output.push({
+						name:	'Noise Cancelation',
+						chart:	t.chart({main:true})
+					});
+					t.reset().smoother({period:10}).noiseData();
+					output.push({
+						name:	"Signal's noise",
+						chart:	t.chart({main:false, lines:[0]})
+					});
+					t.reset().smoother({period:10}).noiseData().smoother({period:4});
+					output.push({
+						name:	"Signal's smoothed noise",
+						chart:	t.chart({main:false, lines:[0]})
+					});
+					t.reset().smoother({period:10}).osc().smoother({period:10});
+					output.push({
+						name:	"Trend",
+						chart:	t.chart({main:false, lines:[0]})
+					});
+					
+					
+					var t 		= new ts.main(ts.adapter.fromDB(response));
+					var lwma	= t.lwma({period: 14}).output();
+					output.push({
+						name:	'lwma',
+						chart:	t.chart({main:true})
+					});
+					
+					var t 		= new ts.main(ts.adapter.fromDB(response));
+					var dsp_itrend	= t.dsp_itrend().output();
+					output.push({
+						name:	'dsp_itrend',
+						chart:	t.chart({main:true})
+					});
+					
+					var t 		= new ts.main(ts.adapter.fromDB(response));
+					t.dsp_itrend({use:'trigger'});
+					output.push({
+						name:	'dsp_itrend_s',
+						chart:	t.chart({main:true})
+					});
+					
+					var t 			= new ts.main(ts.adapter.fromDB(response));
+					t.pixelize();
+					output.push({
+						name:	'pixelize',
+						chart:	t.chart({main:true})
+					});
+					
+					callback({
+						charts:			output,
+						stats:	{
+							min:		t_stats.min(),
+							max:		t_stats.max(),
+							mean:		t_stats.mean(),
+							stdev:		t_stats.stdev()
+						},
+						supports:		supports,
+						resistances:	resistances
+					});
+				});
+			}
+		}
 	};
 	
 	// Init a connection

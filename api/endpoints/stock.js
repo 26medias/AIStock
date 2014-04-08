@@ -248,6 +248,17 @@ api.prototype.init = function(Gamify, callback){
 						CutoffPeriod:	20
 					});
 					
+					
+					// Now we remove the noise using the Instatrend by Elher
+					
+					
+					// Instatrend
+					processed.instatrend 	= tradestudio.indicators.DSP.InstaTrend(tradeData, {
+						price: 	tradestudio.indicators.C,
+						alpha:	0.6
+					});
+					
+					
 					output.processed 		= processed;
 					
 					
@@ -338,7 +349,7 @@ api.prototype.init = function(Gamify, callback){
 						width:	800,
 						height:	100,
 						xlines:	[30,70],
-						autoscale:	false
+						autoscale:	true
 					});
 					RSIChart.fromTradeStudio(processed.RSI);
 					output.images.RSI 	= RSIChart.render();
@@ -353,6 +364,16 @@ api.prototype.init = function(Gamify, callback){
 					DSPOChart.fromTradeStudio(processed.DSPO);
 					output.images.DSPO 	= DSPOChart.render();
 					
+					
+					
+					// Instatrend Chart
+					var noiseRemovalChart = new gimage.line({
+						width:	800,
+						height:	350
+					});
+					noiseRemovalChart.fromYahoo(output.financial);
+					noiseRemovalChart.fromTradeStudio(processed.instatrend);
+					output.images.instatrend 	= noiseRemovalChart.render();
 					
 					
 					
@@ -424,7 +445,7 @@ api.prototype.init = function(Gamify, callback){
 					var indicators 		= ['stochastic', 'aroon', 'RSI', 'DSPOscillator'];
 					
 					// Get the futurePrice data
-					var future			= tradestudio.indicators.futurePrices(tradeData, {period:10}, function(v) {
+					var future			= tradestudio.indicators.futureTrends(tradeData, {period:10}, function(v) {
 						return new Date(v).standard();
 					});
 					
@@ -465,6 +486,136 @@ api.prototype.init = function(Gamify, callback){
 					//delete output.financial;
 					
 					callback(output);
+				}, false);
+			}
+		},
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		getNeuralData: {
+			require:		['symbol'],
+			auth:			false,
+			description:	"Process the stock data for use by a Neural Network",
+			params:			{symbol:'Stock Symbol to analyze, format SYMBOL', days:	"Number of days to pull.", nnready:"Bool - true = output data ready for a NN"},
+			status:			'stable',
+			version:		1.2,
+			callback:		function(params, req, res, callback) {
+				var stack = new Gamify.stack();
+				
+				
+				params	= scope.Gamify.api.fixTypes(params, {
+					days:		'number',
+					nnready:	'bool',
+					indicators:	'array',
+					outputOptions:	'object'
+				});
+				
+				Gamify.log("params", params);
+				
+				params = _.extend({
+					days:		12*30,
+					nnready:	false,
+					indicators:	['stochastic', 'aroon', 'RSI', 'DSPOscillator'],
+					output:		'futureTrends',
+					outputOptions:	{period:10, trend:false}
+				}, params);
+				
+				var output = {
+					signals:	{},		// Indicators signals:	[-1;0;1]
+					changes:	{},		// Stock price change:	[-1;0;1]
+				};
+				
+				// Clean the symbol
+				var symbol = params.symbol.toLowerCase();
+				
+				// First, we need to get the financial data
+				stack.add(function(p, cb) {
+					// Go back 30 days
+					Gamify.data.stock.getHistoricalData(symbol, new Date(new Date().getTime()-(1000*60*60*24*params.days)), new Date(), function(response) {
+						output.financial 	= response;
+						
+						// Index by date
+						output.stock		= _.indexBy(response, function(point) {
+							return new Date(point.date).standard();
+						});
+						cb();
+					});
+				}, {});
+				
+				stack.process(function() {
+					
+					// 
+					
+					// Convert to the TradeStudio format
+					var tradeData 		= tradestudio.utils.fromYahoo(output.financial);
+					
+					// List the indicators we want to use
+					var indicators 		= params.indicators;
+					
+					// Get the futurePrice data
+					Gamify.log("params.output",params.output);
+					var future			= tradestudio.indicators[params.output](tradeData, params.outputOptions, function(v) {
+						return new Date(v).standard();
+					});
+					
+					output.future = future;
+					
+					_.each(indicators, function(indicator) {
+						var datasets = tradestudio.indicators[indicator](tradeData);
+						
+						// Now, we check for each if there are signals in there
+						_.each(datasets, function(dataset) {
+							if (dataset.signal) {
+								//console.log("dataset",dataset);
+								// There is a signal function
+								_.each(dataset.data, function(datapoint) {
+									var signal	= dataset.signal(datapoint[1]);
+									var date	= datapoint[0].standard();
+									
+									if (!output.signals[date]) {
+										output.signals[date] = {
+											input:	{},
+											output:	0
+										};
+									}
+									
+									output.signals[date].input[dataset.name] 	= signal;
+									if (output.future[date]) {
+										output.signals[date].output 			= output.future[date];
+									} else {
+										output.signals[date].output				= false;
+									}
+								});
+							}
+						});
+						
+						//output.processed[indicator] = datasets;
+					});
+					
+					//delete output.financial;
+					
+					if (params.nnready) {
+						// Prepare the proper NN output
+						var data = [];
+						var date;
+						for (date in output.signals) {
+							if (output.signals[date].output) {
+								data.push(output.signals[date]);
+							}
+						}
+						callback(data);
+					} else {
+						callback(output);
+					}
+					
 				}, false);
 			}
 		}

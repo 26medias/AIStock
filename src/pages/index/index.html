@@ -1,22 +1,56 @@
+<style type="text/css">
+	.progress {
+		margin-bottom: 0;
+	}
+</style>
 <div ng-controller="mainCtrl">
 	<div class="panel panel-default">
 		<div class="panel-heading">Trending Stocks</div>
+		<div ng-if="!loading" class="panel-body">
+			<p>Trending stocks right now...</p>
+			<div class="btn btn-primary" ng-click="runAnalysis()">
+				<span class="glyphicon glyphicon-play"></span> Run the analysis
+			</div>
+		</div>
 		<table ng-if="!loading" class="table table-hover">
 			<thead>
 				<tr>
 					<th>Symbol</th>
 					<th>Name</th>
+					<th>Accuracy</th>
 					<th>&nbsp;</th>
 				</tr>
 			</thead>
 			<tbody>
-				<tr ng-repeat="stock in trending">
+				<tr rank="stock" ng-repeat="stock in trending">
 					<td>${{stock.symbol}}</td>
 					<td>{{stock.title}}</td>
+					<th>
+						<div class="progress progress-striped active" ng-if="stock.complete>=0&&stock.complete<100">
+							<div class="progress-bar" role="progressbar" aria-valuenow="{{stock.complete}}" aria-valuemin="0" aria-valuemax="100" style="width: {{stock.complete}}%;">
+								{{stock.complete}}%
+							</div>
+						</div>
+						<span ng-if="stock.neural.score&&(!stock.complete||stock.complete>=100)">
+							<div class="btn btn-primary btn-xs" ng-class="{'btn-success':stock.grade=='A+'||stock.grade=='A'||stock.grade=='B','btn-danger':stock.grade=='D'||stock.grade=='E'||stock.grade=='F','btn-warning':stock.grade=='C'}">
+								{{stock.grade}}
+							</div>
+							
+							<span ng-if="stock.neural.score==stock.neural.wscore">
+								{{stock.neural.score}}%
+							</span>
+							<span ng-if="stock.neural.score!=stock.neural.wscore">
+								{{stock.neural.score}}% - {{stock.neural.wscore}}%
+							</span>
+						</span>
+					</th>
 					<td>
 						<div style="text-align:right;" ng-if="!stock.loading">
 							<div class="btn btn-primary btn-xs" ng-click="analyze(stock)">
 								<span class="glyphicon glyphicon-plus-sign"></span> Analyze
+							</div>
+							<div class="btn btn-primary btn-xs" ng-click="see(stock)">
+								<span class="glyphicon glyphicon-chevron-right"></span> See
 							</div>
 						</div>
 						
@@ -37,27 +71,86 @@
 		$scope.trending = [];
 		$scope.loading 	= true;
 		
-		$scope.analyze	= function(stock) {
+		$scope.runAnalysis = function() {
+			var stack = new window.Stack();
+			
+			_.each($scope.trending, function(stock) {
+				stack.add(function(p, cb) {
+					$scope.analyze(stock, cb);
+					$scope.safeApply();
+				}, {});
+			});
+			
+			stack.process(function() {
+				alert("All stocks processed.");
+			});
+		}
+		
+		
+		
+		$scope.see	= function(stock) {
 			console.log("analysing ",stock);
 			var symbol = stock.symbol;
 			
 			
 			stock.loading = true;
 			$.location("analyze/index.html?symbol="+symbol);
-			/*
+		}
+		
+		$scope.analyze	= function(stock, cb) {
+			stock.loading 	= true;
+			stock.complete	= 15;
+			var symbol = stock.symbol;
+			
+			// First, we analyse the financial data
+			$scope.analyzeData(stock, function(analysis) {
+				stock.complete = 50;
+				$scope.$apply();
+				// Now we train the Neural Net
+				$scope.neuralTrain(stock, function(trainResponse) {
+					stock.neural 	= trainResponse;
+					stock.complete 	= 100;
+					stock.loading 	= false;
+					$scope.$apply();
+					if (cb) {
+						cb();
+					}
+				});
+			});
+		}
+		
+		
+		
+		
+		
+		$scope.analyzeData	= function(stock, cb) {
+			var symbol = stock.symbol;
+			console.log("analysing ",symbol);
+			
 			$.apicall({
 				method:		"stock.analyze",
 				params:	{
 					symbol: symbol
 				},
-				callback:	function(response) {
-					stock.loading = false;
-					console.log("response",response);
-					$scope.$apply();
-				}
+				callback:	cb
 			});
-			*/
 		}
+		
+		$scope.neuralTrain	= function(stock, cb) {
+			var symbol = stock.symbol;
+			console.log("Training Neural Net for ",symbol);
+			
+			$.apicall({
+				method:		"train.stock",
+				params:	{
+					symbol: symbol,
+					name:	symbol
+				},
+				callback:	cb
+			});
+		}
+		
+		
 		
 		$(function() {
 			console.log("access_token",	$.getCookie('access_token'));
@@ -80,5 +173,62 @@
 				document.location = "https://api.stocktwits.com/api/2/oauth/authorize?client_id=fad12fc04b67ab4e&response_type=code&redirect_uri=http://localhost/git/AIStock/build/auth.html&scope=read,watch_lists,publish_messages,publish_watch_lists,direct_messages,follow_users,follow_stocks";
 			}
 		});
-	});
+	}).directive('rank', function() {
+		function link(scope, element, attrs) {
+			console.log("scope.rank",scope.rank);
+			
+			var onChange = function() {
+				if (scope.rank && scope.rank.neural && scope.rank.neural.score) {
+					scope.rank.grade = "A+";
+					console.log("scope.rank.neural.score",scope.rank.neural.score);
+					if (scope.rank.neural.score<=50) {
+						scope.rank.grade = "F";
+						element.addClass("danger");
+					} else if (scope.rank.neural.score>=100) {
+						scope.rank.grade = "A+";
+						element.addClass("success");
+					} else if (scope.rank.neural.score>=90) {
+						scope.rank.grade = "A";
+						element.addClass("success");
+					} else if (scope.rank.neural.score>=80) {
+						scope.rank.grade = "B";
+						element.addClass("success");
+					} else if (scope.rank.neural.score>=70) {
+						scope.rank.grade = "C";
+						element.addClass("warning");
+					} else if (scope.rank.neural.score>=60) {
+						scope.rank.grade = "D";
+						element.addClass("danger");
+					} else if (scope.rank.neural.score>50) {
+						scope.rank.grade = "E";
+						element.addClass("danger");
+					}
+				}
+			}
+			
+			scope.$watch("rank", function(newValue,oldValue) {
+				onChange();
+			}, true);
+			
+		}
+		
+		return {
+			link: 			link,
+			transclude:		false,
+			scope:	{
+				rank:	'='
+			}
+		};
+	}).run(['$rootScope', function($rootScope) {
+		$rootScope.safeApply = function(fn) {
+			var phase = this.$root.$$phase;
+			if(phase == '$apply' || phase == '$digest') {
+				if(fn && (typeof(fn) === 'function')) {
+					fn();
+				}
+			} else {
+				this.$apply(fn);
+			}
+		};
+	}]);
 </script>

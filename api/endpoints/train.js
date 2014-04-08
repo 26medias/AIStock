@@ -414,6 +414,8 @@ api.prototype.init = function(Gamify, callback){
 					days:				12*30
 				}, params);
 				
+				params.name = params.name.toLowerCase();
+				
 				// Get the training data
 				scope.Gamify.api.execute("stock","processSignals", {
 					symbol:		params.symbol,
@@ -507,8 +509,8 @@ api.prototype.init = function(Gamify, callback){
 						
 						
 						cb({
-							score:		Math.round(tscore/tn*100)+"%",
-							wscore:		Math.round(twscore/twn*100)+"%",
+							score:		Math.round(tscore/tn*100),
+							wscore:		Math.round(twscore/twn*100),
 							chart:		chart,
 							output:		output
 						});
@@ -529,9 +531,14 @@ api.prototype.init = function(Gamify, callback){
 						}
 					}, function(response) {
 						if (response.length == 0 || params.retrain) {
+							console.log("\n*** Creating a new Neural Net ***");
+							console.log("\n*** Training... ***");
 							// Train!
 							// Now we train
-							var net 				= new brain.NeuralNetwork();
+							var net 				= new brain.NeuralNetwork({
+								hiddenLayers: [6,6],
+								learningRate: 0.25
+							});
 							
 							var trainResponse		= net.train(trainingData);
 							Gamify.log("Training Response", trainResponse);
@@ -545,7 +552,8 @@ api.prototype.init = function(Gamify, callback){
 								data:	{
 									$set:	{
 										name:	params.name,
-										net:	net.toJSON()
+										net:	net.toJSON(),
+										trainResponse:	trainResponse
 									}
 								}
 							}, function(err, response) {
@@ -555,7 +563,7 @@ api.prototype.init = function(Gamify, callback){
 								testNetwork(net, testData, function(testResponse) {
 									// train on the most recent data, the test sample
 									var trainResponse		= net.train(testData);
-									Gamify.log("Remaining Training Response", trainResponse);
+									Gamify.log("Training Response", trainResponse);
 									
 									// Now we save the neural net
 									scope.mongo.update({
@@ -565,8 +573,8 @@ api.prototype.init = function(Gamify, callback){
 										},
 										data:	{
 											$set:	{
-												name:	params.name,
-												net:	net.toJSON()
+												name:			params.name,
+												net:			net.toJSON()
 											}
 										}
 									}, function(err, response) {

@@ -4,6 +4,10 @@
 		"index.html": {
 			"title":	"AIStock - Smart Stock Analysis",
 			"filename":	"index.html"
+		},
+		"test.html": {
+			"title":	"AIStock - Smart Stock Analysis",
+			"filename":	"test.html"
 		}
 	},
 	"template":		"main.html",
@@ -13,6 +17,7 @@
 		"bootstrap",
 		"examples",
 		"highcharts-ng",
-		"api"
+		"api",
+		"stack"
 	]
 }

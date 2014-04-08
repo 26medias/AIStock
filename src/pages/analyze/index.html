@@ -163,6 +163,13 @@
 					</div>
 				</div>
 				
+				<div class="panel panel-default">
+					<div class="panel-heading">Noise Removal - ${{symbol}}</div>
+					<div class="panel-content">
+						<img class="responsive" ng-src="{{data.images.instatrend}}" title="Noise Removal" />
+					</div>
+				</div>
+				
 			</div>
 			
 			<div ng-if="loading.analysis" class="panel-content" style="text-align:center;padding:30px;">
@@ -332,5 +339,5 @@
 			$scope.analyze($scope.symbol);
 			$scope.neuralTrain($scope.symbol);
 		});
-	});
+	})
 </script>

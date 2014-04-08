@@ -1,0 +1,167 @@
+<style type="text/css">
+	img.autoscale {
+		width:	100%;
+	}
+</style>
+<div ng-controller="mainCtrl">
+	<div class="row">
+		<div class="col-md-8">
+			<div class="panel panel-default">
+				<div class="panel-heading">Charts</div>
+				<div ng-if="!loading" class="panel-body">
+					<div ng-repeat="chart in charts.charts">
+						<h4>{{chart.name}}</h4>
+						<img class="autoscale" ng-src="{{chart.chart}}" />
+					</div>
+				</div>
+				<div ng-if="loading" class="panel-content" style="text-align:center;padding:30px;">
+					Please wait while we load the charts...<br />
+					<img src="images/loading.gif" alt="" style="margin:10px;" />
+				</div>
+			</div>
+		</div>
+		<div class="col-md-4">
+			<div class="panel panel-default">
+				<div class="panel-heading">Options</div>
+				<table ng-if="!loading" class="table table-hover">
+					<tbody>
+						<tr>
+							<td>
+								Symbol
+							</td>
+							<td>
+								<input ng-model="options.symbol" type="text" class="form-control" />
+							</td>
+						</tr>
+						<tr>
+							<td>
+								Days
+							</td>
+							<td>
+								<input ng-model="options.days" type="text" class="form-control" />
+							</td>
+						</tr>
+						<tr>
+							<td>
+								Supp/Ress Grid
+							</td>
+							<td>
+								<input ng-model="options.grid" type="text" class="form-control" />
+							</td>
+						</tr>
+						<tr>
+							<td>
+								Supp/Ress Threshold
+							</td>
+							<td>
+								<input ng-model="options.threshold" type="text" class="form-control" />
+							</td>
+						</tr>
+					</tbody>
+				</table>
+				<div ng-if="loading" class="panel-content" style="text-align:center;padding:30px;">
+					Please wait while we load the stats...<br />
+					<img src="images/loading.gif" alt="" style="margin:10px;" />
+				</div>
+				<div class="panel-footer">
+					<div class="btn btn-primary" ng-click="refresh()">
+						<span class="glyphicon glyphicon-refresh"></span> Refresh
+					</div>
+				</div>
+			</div>
+			
+			<div class="panel panel-default">
+				<div class="panel-heading">Stats</div>
+				<table ng-if="!loading" class="table table-hover">
+					<tbody>
+						<tr ng-repeat="(name,stat) in charts.stats">
+							<td>{{name}}</td>
+							<td>{{stat}}</td>
+						</tr>
+					</tbody>
+				</table>
+				<div ng-if="loading" class="panel-content" style="text-align:center;padding:30px;">
+					Please wait while we load the stats...<br />
+					<img src="images/loading.gif" alt="" style="margin:10px;" />
+				</div>
+			</div>
+			
+			<div class="panel panel-default">
+				<div class="panel-heading">Supports</div>
+				<table ng-if="!loading" class="table table-hover">
+					<tbody>
+						<tr ng-repeat="item in charts.supports">
+							<td>{{item.price}}</td>
+							<td>{{item.count}}</td>
+						</tr>
+					</tbody>
+				</table>
+				<div ng-if="loading" class="panel-content" style="text-align:center;padding:30px;">
+					Please wait while we load the stats...<br />
+					<img src="images/loading.gif" alt="" style="margin:10px;" />
+				</div>
+			</div>
+			
+			<div class="panel panel-default">
+				<div class="panel-heading">Resistances</div>
+				<table ng-if="!loading" class="table table-hover">
+					<tbody>
+						<tr ng-repeat="item in charts.resistances">
+							<td>{{item.price}}</td>
+							<td>{{item.count}}</td>
+						</tr>
+					</tbody>
+				</table>
+				<div ng-if="loading" class="panel-content" style="text-align:center;padding:30px;">
+					Please wait while we load the stats...<br />
+					<img src="images/loading.gif" alt="" style="margin:10px;" />
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+
+<script type="text/javascript">
+	main.controller('mainCtrl', function ($scope) {
+		$scope.charts 	= [];
+		$scope.loading 	= true;
+		
+		$scope.options = {
+			symbol:		'FB',
+			days:		360,
+			grid:		40,
+			threshold:	1
+		}
+		
+		$scope.refresh	= function() {
+			$scope.loading 	= true;
+			$.apicall({
+				method:		"neuralnet.test2",
+				params:		$scope.options,
+				callback:	function(data) {
+					$scope.charts	= data;
+					$scope.loading 	= false;
+					$scope.safeApply();
+				}
+			});
+		}
+		
+		$(function() {
+			$scope.params = $.getParams();
+			$scope.symbol = $scope.params.symbol;
+			$scope.refresh();
+		});
+		
+	}).run(['$rootScope', function($rootScope) {
+		$rootScope.safeApply = function(fn) {
+			var phase = this.$root.$$phase;
+			if(phase == '$apply' || phase == '$digest') {
+				if(fn && (typeof(fn) === 'function')) {
+					fn();
+				}
+			} else {
+				this.$apply(fn);
+			}
+		};
+	}]);
+</script>

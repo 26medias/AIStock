@@ -42,24 +42,10 @@
 					</div>
 					<div class="collapse navbar-collapse">
 						<ul class="nav navbar-nav">
-							
 							<li class="dropdown ">
-								<a href="#" class="dropdown-toggle" data-toggle="dropdown">Charts <b class="caret"></b></a>
+								<a href="#" class="dropdown-toggle" data-toggle="dropdown">Trading <b class="caret"></b></a>
 								<ul class="dropdown-menu">
-									<li><a href="stock/chart.html?symbol={{symbol}}" ng-repeat="(symbol, keywords) in tracked">${{symbol}}</a></li>
-								</ul>
-							</li>
-							
-							<li class="dropdown ">
-								<a href="#" class="dropdown-toggle" data-toggle="dropdown">Relevance Training <b class="caret"></b></a>
-								<ul class="dropdown-menu">
-									<li><a href="train/relevance.html?symbol={{symbol}}" ng-repeat="(symbol, keywords) in tracked">${{symbol}}</a></li>
-								</ul>
-							</li>
-							<li class="dropdown active">
-								<a href="#" class="dropdown-toggle" data-toggle="dropdown">Sentiment Training <b class="caret"></b></a>
-								<ul class="dropdown-menu">
-									<li><a href="train/sentiment.html?symbol={{symbol}}" ng-repeat="(symbol, keywords) in tracked">${{symbol}}</a></li>
+									<li><a href="trading/index.html">Dashboard</a></li>
 								</ul>
 							</li>
 							<li><a href="https://api.stocktwits.com/api/2/oauth/authorize?client_id=fad12fc04b67ab4e&response_type=code&redirect_uri=http://localhost/git/AIStock/build/auth.html&scope=read,watch_lists,publish_messages,publish_watch_lists,direct_messages,follow_users,follow_stocks">Login</a></li>

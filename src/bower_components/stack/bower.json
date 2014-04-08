@@ -1,0 +1,12 @@
+{
+	"name": "stack",
+	"version": "1.0",
+	"main": [
+		"stack.js"
+	],
+	"dependencies":	{
+		"jquery":		"latest",
+		"underscore":	"latest",
+		"json2":		"latest"
+	}
+}
