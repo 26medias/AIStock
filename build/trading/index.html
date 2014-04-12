@@ -77,33 +77,128 @@
 			<!-- Begin page content -->
 			<div class="container" style="padding-top: 80px;">
 				<style type="text/css">
-	img.responsive {
+	img.autoscale {
 		width:	100%;
 	}
 </style>
 <div ng-controller="mainCtrl">
+
 	
+	<div ng-if="sim.loading" class="panel-content" style="text-align:center;padding:30px;">
+		Please wait while we simulate the trades...<br />
+		<img src="images/loading.gif" alt="" style="margin:10px;" />
+	</div>
 	<div class="row">
 		<div class="col-md-8">
-			<div ng-if="!loading.list">
+			<div>
 				
 				<div class="panel panel-default">
-					<div class="panel-heading">Stocks</div>
-					<div class="panel-content">
+					<div class="panel-heading">Positions</div>
+					<div class="panel-content" ng-if="sim.chart">
+						<img class="autoscale" ng-src="{{sim.chart}}" />
+					</div>
+					<div class="panel-content" ng-if="!sim.chart">
+						<img class="autoscale" ng-src="{{trade.chart}}" />
+					</div>
+					<div class="panel-footer">
 						
 					</div>
-					<div class="panel-footer">controls</div>
 				</div>
-			</div>
-			
-			<div ng-if="loading.list" class="panel-content" style="text-align:center;padding:30px;">
-				Please wait while we load your stock list...<br />
-				<img src="images/loading.gif" alt="" style="margin:10px;" />
 			</div>
 		</div>
 		<div class="col-md-4">
-			
+			<div class="panel panel-default">
+				<div class="panel-heading">Options</div>
+				<table class="table table-hover">
+					<tbody>
+						<tr>
+							<td>
+								Symbol
+							</td>
+							<td>
+								<input ng-model="trade.symbol" type="text" class="form-control" />
+							</td>
+						</tr>
+						<tr>
+							<td>
+								Days
+							</td>
+							<td>
+								<input ng-model="trade.days" type="text" class="form-control" />
+							</td>
+						</tr>
+						<tr>
+							<td>
+								Until
+							</td>
+							<td>
+								<input ng-model="trade.until" type="text" class="form-control" />
+							</td>
+						</tr>
+						<tr>
+							<td>
+								Smoothing
+							</td>
+							<td>
+								<input ng-model="trade.smoothing" type="text" class="form-control" />
+							</td>
+						</tr>
+						<tr>
+							<td>
+								Noise
+							</td>
+							<td>
+								<input ng-model="trade.noise" type="text" class="form-control" />
+							</td>
+						</tr>
+					</tbody>
+				</table>
+				<div class="panel-footer">
+					<div class="btn btn-primary" ng-click="trade.refresh()">
+						<span class="glyphicon glyphicon-refresh"></span> Refresh
+					</div>
+					<div class="btn btn-primary" ng-click="sim.simtrade()">
+						<span class="glyphicon glyphicon-play"></span> Run Simulation
+					</div>
+				</div>
+			</div>
 		</div>
+	</div>
+	
+	
+	<div ng-if="!sim.loading" class="panel panel-default">
+		<div class="panel-heading">Trading Sim</div>
+		<table class="table table-hover">
+			<thead>
+				<tr>
+					<th colspan="2">Buy</th>
+					<th colspan="2">Sell</th>
+					<th colspan="2">Profit</th>
+					<th>Chart</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr class="active">
+					<td colspan="4">{{sim.actions.length}} trades executed.</td>
+					<td>${{sim.stats.profit|number:2}}</td>
+					<td>{{sim.stats.gain|number:2}}%</td>
+					<td><img ng-src="{{sim.stats.chart}}" title="Profit Chart" /></td>
+				</tr>
+				<tr ng-class="{danger:action.profit.pct<0,success:action.profit.pct>0}" ng-repeat="action in sim.actions">
+					
+					<td>{{action.buy.date|date}}</td>
+					<td>${{action.buy.price|number:2}}</td>
+					
+					<td>{{action.sell.date|date}}</td>
+					<td>${{action.sell.price|number:2}}</td>
+					
+					<td ng-class="{'text-danger':action.profit.pct<0,'text-success':action.profit.pct>0}">${{action.profit.value|number:2}}</td>	
+					<td ng-class="{'text-danger':action.profit.pct<0,'text-success':action.profit.pct>0}">{{action.profit.pct|number:2}}%</td>				
+					
+					<td style="width:250px;"><img ng-src="{{action.chart}}" title="Chart" /></td>
+				</tr>
+			</tbody>
+		</table>
 	</div>
 	
 </div>
@@ -114,11 +209,78 @@
 			list:			false
 		};
 		
+		$scope.sim	= {
+			loading:		false,
+			actions:		[],
+			chart:			false,
+			stats:			{profit:0,gain:0},
+			simtrade:		function() {
+				$scope.sim.loading = true;
+				$.apicall({
+					method:		"trade.simtrade",
+					params:		{
+						symbol:		$scope.trade.symbol,
+						days:		$scope.trade.days,
+						smoothing:	$scope.trade.smoothing,
+						noise:		$scope.trade.noise
+					},
+					callback:	function(data) {
+						console.log("sim data",data);
+						$scope.sim.actions 	= data.actions;
+						$scope.sim.stats 	= data.stats;
+						$scope.sim.chart	= data.chart;
+						$scope.sim.loading 	= false;
+						$scope.safeApply();
+					}
+				});
+			}
+		};
+		
+		$scope.trade = {
+			loading:		true,
+			days:			400,
+			until:			400,
+			smoothing:		10,
+			noise:			1,
+			chart:			false,
+			symbol:			'FB',
+			refresh:		function() {
+				$scope.trade.loading = true;
+				$.apicall({
+					method:		"trade.slice",
+					params:		{
+						symbol:		$scope.trade.symbol,
+						days:		$scope.trade.days,
+						until:		$scope.trade.until,
+						smoothing:	$scope.trade.smoothing,
+						noise:		$scope.trade.noise
+					},
+					callback:	function(data) {
+						$scope.sim.chart		= false;
+						$scope.trade.chart		= data.chart;
+						$scope.trade.loading 	= false;
+						$scope.safeApply();
+					}
+				});
+			}
+		}
+		
 		
 		$(function() {
-			
+			$scope.trade.refresh();
 		});
-	})
+	}).run(['$rootScope', function($rootScope) {
+		$rootScope.safeApply = function(fn) {
+			var phase = this.$root.$$phase;
+			if(phase == '$apply' || phase == '$digest') {
+				if(fn && (typeof(fn) === 'function')) {
+					fn();
+				}
+			} else {
+				this.$apply(fn);
+			}
+		};
+	}]);
 </script>
 
 			</div>

@@ -17,6 +17,7 @@
 		"needle":		"latest",
 		"quiche":		"latest",
 		"tradestudio":	"latest",
+		"machine_learning":	"latest",
 		"twig": 		"*"
 	}
 }

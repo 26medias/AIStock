@@ -302,11 +302,6 @@ api.prototype.init = function(Gamify, callback){
 						stats:		true
 					});
 					
-					
-					Gamify.log("supports", supports);
-					Gamify.log("resistances", resistances);
-					
-					
 					var t 		= new ts.main(ts.adapter.fromDB(response));
 					
 					// Support/resistance chart
@@ -322,10 +317,6 @@ api.prototype.init = function(Gamify, callback){
 					
 					var supp_ress_min = Math.min(_.min(_.map(supports, function(item) { return item.count; })), _.min(_.map(resistances, function(item) { return item.count; })));
 					var supp_ress_max = Math.max(_.max(_.map(supports, function(item) { return item.count; })), _.max(_.map(resistances, function(item) { return item.count; })));
-					
-					
-					Gamify.log("supp_ress_min", supp_ress_min);
-					Gamify.log("supp_ress_max", supp_ress_max);
 					
 					// Create the color range
 					var rainbow 	= new Rainbow();
@@ -348,20 +339,36 @@ api.prototype.init = function(Gamify, callback){
 						});
 					});
 					chart.fromTradeStudio(sup_res_lines);
-					output.push({
+					/*output.push({
 						name:	'Supports/resistances',
 						chart:	chart.render()
-					});
+					});*/
 					
+					/*
+					var t 		= new ts.main(ts.adapter.geometric({}));
+					
+					t.reset().regression_forecast({forecast:15});
+					output.push({
+						name:	'Sin',
+						chart:	t.chart({main:true})
+					});
+					/*t.reset().cycle({period:1, forecast:120});
+					output.push({
+						name:	'Angle',
+						chart:	t.chart({main:true,lines:[0],points:[{color:'ff0000',point:120,serie:0},{color:'ff0000',point:140,serie:0}]})
+					});
+					*/
 					
 					
 					
 					var t 		= new ts.main(ts.adapter.fromDB(response));
-					t.dsp_itrend({alpha: 0.7});
+					t.ARMaxEntropy();
+					t.ARLeastSquare();
 					output.push({
-						name:	'test',
-						chart:	t.chart({main:true})
+						name:	'Trend',
+						chart:	t.chart({main:false,lines:[0]})
 					});
+					
 					
 					
 					

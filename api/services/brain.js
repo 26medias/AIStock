@@ -22,6 +22,7 @@ exports.service = function (Gamify) {
 				save:		false,		// Save the network,
 				topology:	"auto",		// "auto", array or false (default)
 				rate:		false,		// Learning rate
+				threshold:	0.001,		// Error threshold
 				chart:		true,		// Training chart accuracy
 				test:		{			// Can be false for no data testing
 					binaryOutput:	true,	// if true, then output will be considered on the range [0;1] and forecasts will be then rounded.
@@ -66,6 +67,7 @@ exports.service = function (Gamify) {
 			
 			var trainNetwork = function(neural) {
 				scope._train({
+					threshold:	options.threshold,
 					neural:		neural,
 					data:		trainingData
 				}, function(trainResponse) {
@@ -161,7 +163,8 @@ exports.service = function (Gamify) {
 		this._train	= function(options, callback) {
 			
 			options = _.extend({
-				data:			[]
+				data:			[],
+				threshold:		0.001
 			},options);
 			
 			if (!options.neural) {
@@ -170,7 +173,7 @@ exports.service = function (Gamify) {
 			}
 			
 			var trainResponse		= options.neural.train(options.data, {
-				//errorThresh: 0.00001
+				errorThresh: options.threshold
 			});
 			Gamify.log("Training Response", trainResponse);
 			
